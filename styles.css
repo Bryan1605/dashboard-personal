@@ -912,25 +912,64 @@ h3 {
 /* 25. Mobile Taskbar Responsive */
 @media (max-width: 600px) {
   .taskbar {
-    padding: 0 8px;
-    height: 52px;
+    padding: 0 4px;
+    height: 50px;
   }
   
   .taskbar-right {
-    gap: 4px;
+    gap: 2px;
+    flex-shrink: 0;
   }
   
   .taskbar-clock {
-    padding: 0 6px;
-    font-size: 0.7rem;
-  }
-  
-  .taskbar-clock-time {
-    font-size: 0.75rem;
-  }
-  
-  .taskbar-clock span:last-child {
     display: none;
+  }
+  
+  .taskbar-theme,
+  .taskbar-user {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+    padding: 6px;
+  }
+  
+  .taskbar-center {
+    gap: 0;
+    max-width: 100%;
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .taskbar-item {
+    padding: 8px 10px;
+    font-size: 0;
+    gap: 0;
+  }
+  
+  .taskbar-item .icon {
+    font-size: 1.4rem;
+  }
+  
+  .taskbar-item span:not(.icon) {
+    display: none;
+  }
+  
+  .taskbar-item.active {
+    background: rgba(255,255,255,0.2);
+  }
+}
+
+@media (max-width: 400px) {
+  .taskbar {
+    height: 48px;
+  }
+  
+  .taskbar-item {
+    padding: 6px 8px;
+  }
+  
+  .taskbar-item .icon {
+    font-size: 1.25rem;
   }
   
   .taskbar-theme,
@@ -938,48 +977,23 @@ h3 {
     width: 32px;
     height: 32px;
     font-size: 1rem;
-    padding: 6px;
+    padding: 4px;
   }
-  
-  .taskbar-center {
-    gap: 2px;
-    max-width: 55%;
-  }
-  
+}
+
+@media (max-width: 320px) {
   .taskbar-item {
-    padding: 6px 8px;
-    font-size: 0.7rem;
-    gap: 4px;
+    padding: 6px;
   }
   
   .taskbar-item .icon {
     font-size: 1.1rem;
   }
-  
-  .taskbar-item span:not(.icon) {
-    display: none;
-  }
 }
 
-@media (max-width: 380px) {
-  .taskbar {
-    height: 48px;
-    padding: 0 4px;
-  }
-  
-  .taskbar-item {
-    padding: 6px;
-  }
-  
-  .taskbar-item .icon {
-    font-size: 1rem;
-  }
-  
-  .taskbar-theme,
-  .taskbar-user {
-    width: 28px;
-    height: 28px;
-    font-size: 0.9rem;
-    padding: 4px;
+/* Ensure content doesn't get hidden behind taskbar on mobile */
+@media (max-width: 600px) {
+  body {
+    padding-bottom: 60px !important;
   }
 }
