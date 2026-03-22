@@ -286,6 +286,7 @@
   <script src="app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
+      initTheme();
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('income-date').value = today;
       document.getElementById('expense-date').value = today;
