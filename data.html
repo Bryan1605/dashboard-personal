@@ -432,19 +432,31 @@
     }
     
     function importData() {
-      document.getElementById('csvInput').click();
+      console.log('importData called');
+      const input = document.getElementById('csvInput');
+      if (input) {
+        input.click();
+      } else {
+        console.error('csvInput not found');
+      }
     }
     
     function handleCSVImport(file) {
-      if (!file) return;
+      console.log('handleCSVImport called', file);
+      if (!file) {
+        console.error('No file selected');
+        return;
+      }
       
       const reader = new FileReader();
       reader.onload = function(e) {
+        console.log('File read complete');
         const content = e.target.result;
         const lines = content.split('\n');
+        console.log('Lines:', lines.length);
         
-        const existingDB = JSON.parse(localStorage.getItem(DB_NAME) || 'null');
-        const db = existingDB ? { ...existingDB } : {
+        // Use default structure
+        const db = {
           income: [],
           expenses: [],
           debts: [],
@@ -458,63 +470,91 @@
         let currentSection = '';
         let importedData = { income: 0, expenses: 0, debts: 0, habits: 0 };
         
-        lines.forEach(line => {
+        lines.forEach((line, index) => {
           line = line.trim();
-          if (!line || line.startsWith('---')) return;
           
-          if (line.startsWith('Fecha,Fuente')) { currentSection = 'income'; return; }
-          if (line.startsWith('Fecha,Categoria')) { currentSection = 'expense'; return; }
-          if (line.includes('Acreedor')) { currentSection = 'debt'; return; }
-          if (line.startsWith('Nombre')) { currentSection = 'habit'; return; }
+          // Skip empty lines and section headers
+          if (!line) return;
+          if (line.startsWith('---')) {
+            console.log('Section:', line);
+            return;
+          }
           
+          // Detect section by headers
+          if (line.includes('Fecha') && line.includes('Fuente')) { 
+            currentSection = 'income'; 
+            console.log('Detected income section');
+            return; 
+          }
+          if (line.includes('Fecha') && line.includes('Categoria')) { 
+            currentSection = 'expense'; 
+            console.log('Detected expense section');
+            return; 
+          }
+          if (line.includes('Acreedor')) { 
+            currentSection = 'debt'; 
+            console.log('Detected debt section');
+            return; 
+          }
+          if (line.includes('Nombre') && line.includes('Frecuencia')) { 
+            currentSection = 'habit'; 
+            console.log('Detected habit section');
+            return; 
+          }
+          
+          // Parse data lines
           const parts = line.split(',');
           
-          if (currentSection === 'income' && parts.length >= 3) {
+          if (currentSection === 'income' && parts.length >= 2) {
             db.income.push({
               id: Date.now() + Math.random(),
-              date: parts[0],
-              source: parts[1],
-              amount: parseFloat(parts[2])
+              date: parts[0] || '',
+              source: parts[1] || '',
+              amount: parseFloat(parts[2]) || 0
             });
             importedData.income++;
           }
           
-          if (currentSection === 'expense' && parts.length >= 3) {
+          if (currentSection === 'expense' && parts.length >= 2) {
             db.expenses.push({
               id: Date.now() + Math.random(),
-              date: parts[0],
-              category: parts[1],
-              amount: parseFloat(parts[2])
+              date: parts[0] || '',
+              category: parts[1] || '',
+              amount: parseFloat(parts[2]) || 0
             });
             importedData.expenses++;
           }
           
-          if (currentSection === 'debt' && parts.length >= 4) {
+          if (currentSection === 'debt' && parts.length >= 3) {
             db.debts.push({
               id: Date.now() + Math.random(),
-              creditor: parts[0],
-              totalAmount: parseFloat(parts[1]),
-              amountToPay: parseFloat(parts[2]),
-              dueDate: parts[3]
+              creditor: parts[0] || '',
+              totalAmount: parseFloat(parts[1]) || 0,
+              amountToPay: parseFloat(parts[2]) || 0,
+              dueDate: parts[3] || ''
             });
             importedData.debts++;
           }
           
-          if (currentSection === 'habit' && parts.length >= 2) {
+          if (currentSection === 'habit' && parts.length >= 1) {
             const today = new Date().toISOString().split('T')[0];
+            const completed = parts[3] && parts[3].toLowerCase() === 'si';
             db.habits.push({
               id: Date.now() + Math.random(),
-              name: parts[0],
-              category: parts.length >= 5 && parts[4] ? parts[4] : 'General',
+              name: parts[0] || '',
+              category: 'General',
               frequency: parts[1] || 'Diario',
-              notes: parts.length > 2 ? parts[2].replace(/"/g, '') : '',
-              completed: parts.length > 3 && parts[3].toLowerCase() === 'si',
+              notes: parts[2] ? parts[2].replace(/"/g, '') : '',
+              completed: completed,
               archived: false,
-              history: parts.length > 3 && parts[3].toLowerCase() === 'si' ? [today] : []
+              history: completed ? [today] : []
             });
             importedData.habits++;
           }
         });
+        
+        console.log('Imported data:', importedData);
+        console.log('DB:', db);
         
         // Save to localStorage
         localStorage.setItem(DB_NAME, JSON.stringify(db));
@@ -524,14 +564,20 @@
           const user = auth.currentUser;
           if (user) {
             firebase.firestore().collection('users').doc(user.uid).set(db)
-              .then(() => console.log('Imported data synced to cloud'))
-              .catch(err => console.log('Cloud sync error:', err));
+              .then(() => console.log('Synced to cloud'))
+              .catch(err => console.error('Cloud sync error:', err));
           }
         }
         
         updateStatus();
         showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos`);
       };
+      
+      reader.onerror = function(e) {
+        console.error('FileReader error:', e);
+        alert('Error al leer el archivo');
+      };
+      
       reader.readAsText(file);
     }
     
