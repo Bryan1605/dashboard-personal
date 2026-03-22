@@ -49,10 +49,13 @@ function saveDB(data) {
   localStorage.setItem(DB_NAME, JSON.stringify(data));
   
   // Sync to Firebase if authenticated
-  if (typeof db !== 'undefined' && currentUser && !isSyncing) {
-    db.collection('users').doc(currentUser.uid).set(data).catch(err => {
-      console.log('Error syncing to cloud:', err);
-    });
+  if (typeof auth !== 'undefined' && typeof db !== 'undefined') {
+    const user = auth.currentUser;
+    if (user && !isSyncing) {
+      db.collection('users').doc(user.uid).set(data)
+        .then(() => console.log('Synced to cloud'))
+        .catch(err => console.log('Error syncing:', err));
+    }
   }
   
   updateDashboard();
@@ -64,6 +67,13 @@ function signOutUser() {
   }
   localStorage.removeItem('isLoggedIn');
   window.location.href = 'login.html';
+}
+
+function getCloudUser() {
+  if (typeof auth !== 'undefined') {
+    return auth.currentUser;
+  }
+  return null;
 }
 
 // ==========================================

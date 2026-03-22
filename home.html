@@ -329,10 +329,12 @@
     }
     
     async function syncFromCloud() {
-      if (typeof db === 'undefined' || !currentUser) return;
+      if (typeof db === 'undefined') return;
+      const user = auth.currentUser;
+      if (!user) return;
       
       try {
-        const doc = await db.collection('users').doc(currentUser.uid).get();
+        const doc = await db.collection('users').doc(user.uid).get();
         if (doc.exists) {
           localStorage.setItem(DB_NAME, JSON.stringify(doc.data()));
           if (typeof loadStats === 'function') loadStats();
