@@ -414,21 +414,29 @@
       
       async function tryFetch(url) {
         const proxies = [
-          '',
-          'https://api.allorigins.win/get?url=',
-          'https://corsproxy.io/?'
+          { url: 'https://api.allorigins.win/get?url=', type: 'proxy' },
+          { url: 'https://corsproxy.io/?', type: 'proxy' },
+          { url: '', type: 'direct' }
         ];
         
-        for (const proxy of proxies) {
+        for (const { url: proxy, type } of proxies) {
           try {
-            const fullUrl = proxy + encodeURIComponent(url);
+            const fullUrl = type === 'proxy' ? proxy + encodeURIComponent(url) : url;
             const response = await Promise.race([
-              fetch(fullUrl),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+              fetch(fullUrl, type === 'direct' ? { mode: 'cors' } : {}),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
             ]);
             
             if (!response.ok) continue;
-            const data = await response.json();
+            let data;
+            const text = await response.text();
+            
+            if (type === 'proxy') {
+              const json = JSON.parse(text);
+              data = JSON.parse(json.contents);
+            } else {
+              data = JSON.parse(text);
+            }
             
             let dollar = null;
             let euro = null;
@@ -447,6 +455,7 @@
               return true;
             }
           } catch (e) {
+            console.log('Failed:', type, e.message);
             continue;
           }
         }
