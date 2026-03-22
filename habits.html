@@ -236,6 +236,21 @@
   <script src="firebase-config.js"></script>
   <script src="app.js"></script>
   <script>
+    function initThemeInline() {
+      const btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      const saved = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', saved);
+      btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+      btn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        btn.textContent = next === 'dark' ? '☀️' : '🌙';
+      });
+    }
+    
     async function syncFromCloud() {
       const user = getCurrentUser();
       if (!user) return;
@@ -267,7 +282,7 @@
       });
     }
     
-    initTheme();
+    initThemeInline();
   </script>
   
   <!-- User Menu Dropdown -->
