@@ -11,6 +11,74 @@
       padding-top: 20px;
     }
     
+    .taskbar-user {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    
+    .taskbar-user:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .user-menu {
+      position: fixed;
+      bottom: 70px;
+      right: 10px;
+      background: var(--card);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 200px;
+      z-index: 1001;
+      overflow: hidden;
+    }
+    
+    .user-menu.modal-hidden {
+      display: none !important;
+    }
+    
+    .user-menu-content {
+      padding: 8px 0;
+    }
+    
+    .user-info {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    
+    .user-icon {
+      font-size: 1.5rem;
+    }
+    
+    #user-email {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+    
+    .user-menu-item:hover {
+      background: var(--input-bg);
+    }
+    
     .converter-card {
       background: var(--card);
       border-radius: var(--radius-lg);
@@ -195,6 +263,7 @@
   <nav class="taskbar">
     <div class="taskbar-right">
       <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+      <button class="taskbar-user" id="user-btn" title="Usuario" onclick="toggleUserMenu()">👤</button>
     </div>
     
     <div class="taskbar-center">
@@ -378,6 +447,50 @@
       
       init();
     })();
+  </script>
+  
+  <!-- User Menu Dropdown -->
+  <div id="user-menu" class="user-menu modal-hidden">
+    <div class="user-menu-content">
+      <div id="user-info" class="user-info">
+        <span class="user-icon">👤</span>
+        <span id="user-email">No conectado</span>
+      </div>
+      <a href="login.html" class="user-menu-item" id="login-link">
+        <span>🔑</span> Iniciar sesion
+      </a>
+      <a href="#" class="user-menu-item" id="logout-link" onclick="signOutUser(); return false;" style="display: none;">
+        <span>🚪</span> Cerrar sesion
+      </a>
+    </div>
+  </div>
+  
+  <script>
+    function toggleUserMenu() {
+      const menu = document.getElementById('user-menu');
+      menu.classList.toggle('modal-hidden');
+    }
+    
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('user-menu');
+      const btn = document.getElementById('user-btn');
+      if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.add('modal-hidden');
+      }
+    });
+    
+    if (typeof auth !== 'undefined') {
+      auth.onAuthStateChanged(user => {
+        const loginLink = document.getElementById('login-link');
+        const logoutLink = document.getElementById('logout-link');
+        const userEmail = document.getElementById('user-email');
+        if (user && loginLink && logoutLink && userEmail) {
+          userEmail.textContent = user.email;
+          loginLink.style.display = 'none';
+          logoutLink.style.display = 'flex';
+        }
+      });
+    }
   </script>
 </body>
 </html>

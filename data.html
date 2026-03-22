@@ -209,6 +209,74 @@
       padding: 12px 16px;
       font-size: 1rem;
     }
+    
+    .taskbar-user {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    
+    .taskbar-user:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .user-menu {
+      position: fixed;
+      bottom: 70px;
+      right: 10px;
+      background: var(--card);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 200px;
+      z-index: 1001;
+      overflow: hidden;
+    }
+    
+    .user-menu.modal-hidden {
+      display: none !important;
+    }
+    
+    .user-menu-content {
+      padding: 8px 0;
+    }
+    
+    .user-info {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    
+    .user-icon {
+      font-size: 1.5rem;
+    }
+    
+    #user-email {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+    
+    .user-menu-item:hover {
+      background: var(--input-bg);
+    }
   </style>
 </head>
 <body>
@@ -311,6 +379,7 @@
   <nav class="taskbar">
     <div class="taskbar-right">
       <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+      <button class="taskbar-user" id="user-btn" title="Usuario" onclick="toggleUserMenu()">👤</button>
     </div>
     
     <div class="taskbar-center">
@@ -560,17 +629,24 @@
         localStorage.setItem(DB_NAME, JSON.stringify(db));
         
         // Sync to Firebase if authenticated
-        if (typeof auth !== 'undefined' && typeof db !== 'undefined') {
-          const user = auth.currentUser;
-          if (user) {
-            firebase.firestore().collection('users').doc(user.uid).set(db)
-              .then(() => console.log('Synced to cloud'))
-              .catch(err => console.error('Cloud sync error:', err));
-          }
+        const user = getCurrentUser();
+        if (user) {
+          db.collection('users').doc(user.uid).set(db)
+            .then(() => {
+              console.log('Synced to cloud');
+              showResult('Importacion Exitosa', `Se importaron y sincronizaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos\n\nTus datos ahora estan en la nube.`);
+            })
+            .catch(err => {
+              console.error('Cloud sync error:', err);
+              showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos\n\nNota: Sincronizacion con la nube fallida.`);
+            });
+          return; // Exit early since we show result in the promise
         }
         
         updateStatus();
-        showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos`);
+        if (!getCurrentUser()) {
+          showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos`);
+        }
       };
       
       reader.onerror = function(e) {
@@ -711,7 +787,49 @@
       updateStatus();
       updateClock();
       setInterval(updateClock, 1000);
+      
+      if (typeof auth !== 'undefined') {
+        auth.onAuthStateChanged(user => {
+          const loginLink = document.getElementById('login-link');
+          const logoutLink = document.getElementById('logout-link');
+          const userEmail = document.getElementById('user-email');
+          if (user && loginLink && logoutLink && userEmail) {
+            userEmail.textContent = user.email;
+            loginLink.style.display = 'none';
+            logoutLink.style.display = 'flex';
+          }
+        });
+      }
+    });
+    
+    function toggleUserMenu() {
+      const menu = document.getElementById('user-menu');
+      menu.classList.toggle('modal-hidden');
+    }
+    
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('user-menu');
+      const btn = document.getElementById('user-btn');
+      if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.add('modal-hidden');
+      }
     });
   </script>
+  
+  <!-- User Menu Dropdown -->
+  <div id="user-menu" class="user-menu modal-hidden">
+    <div class="user-menu-content">
+      <div id="user-info" class="user-info">
+        <span class="user-icon">👤</span>
+        <span id="user-email">No conectado</span>
+      </div>
+      <a href="login.html" class="user-menu-item" id="login-link">
+        <span>🔑</span> Iniciar sesion
+      </a>
+      <a href="#" class="user-menu-item" id="logout-link" onclick="signOutUser(); return false;" style="display: none;">
+        <span>🚪</span> Cerrar sesion
+      </a>
+    </div>
+  </div>
 </body>
 </html>
