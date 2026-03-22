@@ -992,12 +992,34 @@ h3 {
 }
 
 /* Ensure content doesn't get hidden behind taskbar on mobile */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   body {
-    padding-bottom: 70px !important;
+    padding-bottom: 80px !important;
   }
   
-  .habits-page {
+  .habits-page,
+  .habit-form,
+  .card {
+    padding-bottom: 120px !important;
+  }
+  
+  .export-section {
+    padding-bottom: 140px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding-bottom: 90px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
     padding-bottom: 100px !important;
+  }
+  
+  .container {
+    padding-bottom: 130px !important;
   }
 }
