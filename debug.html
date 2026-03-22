@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .debug-page { padding: 20px; max-width: 600px; margin: 0 auto; }
+    .debug-card { background: var(--card); padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+    .debug-success { color: var(--secondary); }
+    .debug-error { color: var(--danger); }
+    .debug-info { color: var(--primary); }
+    .debug-warning { color: #F59E0B; }
+    pre { background: var(--input-bg); padding: 12px; border-radius: 4px; font-size: 0.75rem; overflow-x: auto; }
+    .btn { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; margin: 8px 4px; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+  </style>
+</head>
+<body>
+  <div class="container debug-page">
+    <h1>Diagnostico Firebase</h1>
+    
+    <div class="debug-card">
+      <h3>1. Estado de Firebase</h3>
+      <p id="firebase-status" class="debug-info">Verificando...</p>
+    </div>
+    
+    <div class="debug-card">
+      <h3>2. Estado de Autenticacion</h3>
+      <p id="auth-status" class="debug-info">Verificando...</p>
+      <p id="user-email" class="debug-info"></p>
+    </div>
+    
+    <div class="debug-card">
+      <h3>3. Datos en localStorage</h3>
+      <pre id="local-data">Cargando...</pre>
+    </div>
+    
+    <div class="debug-card">
+      <h3>4. Datos en Firestore</h3>
+      <pre id="cloud-data">Cargando...</pre>
+      <button class="btn btn-primary" onclick="loadCloudData()">Recargar desde Cloud</button>
+    </div>
+    
+    <div class="debug-card">
+      <h3>5. Acciones</h3>
+      <button class="btn btn-primary" onclick="saveToCloud()">Guardar en Cloud</button>
+      <button class="btn btn-primary" onclick="loadFromCloud()">Cargar desde Cloud</button>
+      <button class="btn btn-danger" onclick="clearLocal()">Limpiar LocalStorage</button>
+    </div>
+    
+    <div class="debug-card">
+      <h3>6. Consola de Logs</h3>
+      <pre id="log" style="max-height: 200px;">Logs apareceran aqui...</pre>
+    </div>
+    
+    <a href="home.html" class="btn btn-primary">Volver al Dashboard</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  
+  <script>
+    const DB_NAME = 'personalDashboardDB';
+    let logs = [];
+    
+    function log(msg, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      logs.unshift(`[${timestamp}] [${type.toUpperCase()}] ${msg}`);
+      if (logs.length > 50) logs.pop();
+      document.getElementById('log').textContent = logs.join('\n');
+      console.log(msg);
+    }
+    
+    function checkFirebase() {
+      const status = document.getElementById('firebase-status');
+      if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        status.textContent = 'Firebase inicializado correctamente';
+        status.className = 'debug-success';
+        log('Firebase OK', 'success');
+        return true;
+      } else {
+        status.textContent = 'Firebase NO esta inicializado';
+        status.className = 'debug-error';
+        log('Firebase NOT initialized', 'error');
+        return false;
+      }
+    }
+    
+    function checkAuth() {
+      const status = document.getElementById('auth-status');
+      const emailEl = document.getElementById('user-email');
+      
+      if (typeof auth === 'undefined') {
+        status.textContent = 'Auth no disponible';
+        status.className = 'debug-error';
+        log('Auth not available', 'error');
+        return null;
+      }
+      
+      const user = auth.currentUser;
+      if (user) {
+        status.textContent = 'Usuario autenticado';
+        status.className = 'debug-success';
+        emailEl.textContent = 'Email: ' + user.email + ' (UID: ' + user.uid + ')';
+        log('User: ' + user.email + ' - UID: ' + user.uid, 'success');
+        return user;
+      } else {
+        status.textContent = 'No hay usuario autenticado';
+        status.className = 'debug-warning';
+        emailEl.textContent = '';
+        log('No user logged in', 'warning');
+        return null;
+      }
+    }
+    
+    function showLocalData() {
+      const data = localStorage.getItem(DB_NAME);
+      const el = document.getElementById('local-data');
+      if (data) {
+        el.textContent = JSON.stringify(JSON.parse(data), null, 2);
+        log('Local data loaded', 'success');
+      } else {
+        el.textContent = '(vacio)';
+        log('No local data', 'warning');
+      }
+    }
+    
+    async function loadCloudData() {
+      const user = checkAuth();
+      const el = document.getElementById('cloud-data');
+      
+      if (!user) {
+        el.textContent = 'No hay usuario autenticado';
+        return;
+      }
+      
+      el.textContent = 'Cargando...';
+      log('Loading cloud data for user: ' + user.uid);
+      
+      try {
+        const doc = await db.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          const data = doc.data();
+          el.textContent = JSON.stringify(data, null, 2);
+          log('Cloud data found: ' + JSON.stringify(data).substring(0, 100) + '...', 'success');
+        } else {
+          el.textContent = '(sin datos en cloud)';
+          log('No cloud data for user', 'warning');
+        }
+      } catch (err) {
+        el.textContent = 'Error: ' + err.message;
+        log('Cloud error: ' + err.message, 'error');
+      }
+    }
+    
+    async function saveToCloud() {
+      const user = checkAuth();
+      if (!user) {
+        alert('Necesitas iniciar sesion primero');
+        return;
+      }
+      
+      const localData = localStorage.getItem(DB_NAME);
+      if (!localData) {
+        alert('No hay datos en localStorage para guardar');
+        return;
+      }
+      
+      const data = JSON.parse(localData);
+      log('Saving to cloud: ' + JSON.stringify(data).substring(0, 100) + '...');
+      
+      try {
+        await db.collection('users').doc(user.uid).set(data);
+        log('Saved to cloud successfully!', 'success');
+        alert('Datos guardados en cloud');
+        await loadCloudData();
+      } catch (err) {
+        log('Save error: ' + err.message, 'error');
+        alert('Error al guardar: ' + err.message);
+      }
+    }
+    
+    async function loadFromCloud() {
+      const user = checkAuth();
+      if (!user) {
+        alert('Necesitas iniciar sesion primero');
+        return;
+      }
+      
+      log('Loading from cloud...');
+      
+      try {
+        const doc = await db.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          const data = doc.data();
+          localStorage.setItem(DB_NAME, JSON.stringify(data));
+          log('Data loaded from cloud to localStorage', 'success');
+          showLocalData();
+          alert('Datos cargados desde cloud');
+        } else {
+          log('No cloud data', 'warning');
+          alert('No hay datos en cloud');
+        }
+      } catch (err) {
+        log('Load error: ' + err.message, 'error');
+        alert('Error al cargar: ' + err.message);
+      }
+    }
+    
+    function clearLocal() {
+      if (confirm('Limpiar localStorage?')) {
+        localStorage.removeItem(DB_NAME);
+        showLocalData();
+        log('LocalStorage cleared', 'warning');
+      }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      log('Page loaded');
+      
+      if (checkFirebase()) {
+        auth.onAuthStateChanged(user => {
+          checkAuth();
+          if (user) {
+            showLocalData();
+            loadCloudData();
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
