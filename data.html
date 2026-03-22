@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Datos</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .data-page {
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+    
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .data-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+      box-shadow: var(--shadow-sm);
+      font-family: inherit;
+      font-size: inherit;
+      width: 100%;
+    }
+    
+    .data-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary);
+    }
+    
+    .data-card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+    
+    .data-card-title {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    
+    .data-card-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .data-card.danger:hover {
+      border-color: var(--danger);
+    }
+    
+    .data-card.success:hover {
+      border-color: var(--secondary);
+    }
+    
+    .status-section {
+      margin-top: 32px;
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--input-bg);
+      border-radius: var(--radius-sm);
+    }
+    
+    .status-icon {
+      font-size: 1.5rem;
+    }
+    
+    .status-info {
+      flex: 1;
+    }
+    
+    .status-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .status-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    
+    .modal {
+      display: none !important;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .modal.active {
+      display: flex !important;
+    }
+    
+    .modal-content {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    
+    .modal h2 {
+      margin-bottom: 16px;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .modal-actions .btn {
+      flex: 1;
+    }
+    
+    .backup-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 16px 0;
+      text-align: left;
+    }
+    
+    .backup-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--input-bg);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    
+    .backup-item:hover {
+      background: var(--border);
+    }
+    
+    .backup-date {
+      font-size: 0.875rem;
+    }
+    
+    .backup-size {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .no-backups {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 20px;
+    }
+    
+    input[type="file"] {
+      display: none;
+    }
+    
+    .info-box {
+      background: var(--input-bg);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin: 16px 0;
+      text-align: left;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="data-page">
+    <div class="container">
+      <h1>⚙️ Gestión de Datos</h1>
+      
+      <div class="data-grid">
+        <button class="data-card" onclick="importData()">
+          <div class="data-card-icon">📤</div>
+          <div class="data-card-title">Importar</div>
+          <div class="data-card-desc">Desde archivo CSV</div>
+        </button>
+        
+        <button class="data-card" onclick="exportData()">
+          <div class="data-card-icon">📥</div>
+          <div class="data-card-title">Exportar</div>
+          <div class="data-card-desc">Descargar CSV</div>
+        </button>
+        
+        <button class="data-card success" onclick="createBackup()">
+          <div class="data-card-icon">💾</div>
+          <div class="data-card-title">Backup</div>
+          <div class="data-card-desc">Guardar copia local</div>
+        </button>
+        
+        <button class="data-card" onclick="openRestoreModal()">
+          <div class="data-card-icon">📂</div>
+          <div class="data-card-title">Restaurar</div>
+          <div class="data-card-desc">Desde backup local</div>
+        </button>
+        
+        <button class="data-card danger" onclick="confirmClearData()">
+          <div class="data-card-icon">🗑️</div>
+          <div class="data-card-title">Limpiar</div>
+          <div class="data-card-desc">Borrar todos los datos</div>
+        </button>
+        
+        <button class="data-card" onclick="openDataModal()">
+          <div class="data-card-icon">👁️</div>
+          <div class="data-card-title">Ver Datos</div>
+          <div class="data-card-desc">JSON en pantalla</div>
+        </button>
+      </div>
+      
+      <div class="status-section">
+        <h2 style="margin-bottom: 16px;">📊 Estado Actual</h2>
+        <div class="status-grid" id="statusGrid">
+          <div class="status-item">
+            <span class="status-icon">📈</span>
+            <div class="status-info">
+              <div class="status-label">Ingresos</div>
+              <div class="status-value" id="statusIncome">0</div>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-icon">📉</span>
+            <div class="status-info">
+              <div class="status-label">Gastos</div>
+              <div class="status-value" id="statusExpenses">0</div>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-icon">💳</span>
+            <div class="status-info">
+              <div class="status-label">Deudas</div>
+              <div class="status-value" id="statusDebts">0</div>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-icon">🎯</span>
+            <div class="status-info">
+              <div class="status-label">Hábitos</div>
+              <div class="status-value" id="statusHabits">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info-box">
+        💡 <strong>Tip:</strong> Los backups locales se guardan en tu navegador. Si cambias de navegador o borras los datos del navegador, perderás los backups. Usa Exportar regularmente para tener copias de seguridad externas.
+      </div>
+    </div>
+  </div>
+   
+  <!-- Windows Taskbar -->
+  <nav class="taskbar">
+    <div class="taskbar-right">
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+    </div>
+    
+    <div class="taskbar-center">
+      <a href="home.html" class="taskbar-item">
+        <span class="icon">🏠</span>
+        <span>Inicio</span>
+      </a>
+      <a href="index.html" class="taskbar-item">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="habits.html" class="taskbar-item">
+        <span class="icon">🎯</span>
+        <span>Habitos</span>
+      </a>
+      <a href="data.html" class="taskbar-item active">
+        <span class="icon">⚙️</span>
+        <span>Datos</span>
+      </a>
+    </div>
+    
+    <div class="taskbar-right">
+      <div class="taskbar-clock">
+        <span class="taskbar-clock-time" id="clock-time">00:00</span>
+        <span id="clock-date">01/01/2026</span>
+      </div>
+    </div>
+  </nav>
+  
+  <input type="file" id="csvInput" accept=".csv" onchange="handleCSVImport(this.files[0])">
+  
+  <!-- Clear Data Modal -->
+  <div id="clearModal" class="modal">
+    <div class="modal-content">
+      <h2>⚠️ ¿Estás seguro?</h2>
+      <p style="color: var(--text-secondary);">Esta acción eliminará TODOS tus datos de forma permanente.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('clearModal')">Cancelar</button>
+        <button class="btn btn-danger" onclick="clearAllData()">Sí, eliminar todo</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Restore Modal -->
+  <div id="restoreModal" class="modal">
+    <div class="modal-content">
+      <h2>📂 Restaurar Backup</h2>
+      <div class="backup-list" id="backupList">
+        <div class="no-backups">No hay backups guardados</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('restoreModal')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- View Data Modal -->
+  <div id="dataModal" class="modal">
+    <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+      <h2>📋 Datos en localStorage</h2>
+      <pre id="dataPreview" style="background: var(--input-bg); padding: 16px; border-radius: 8px; font-size: 0.75rem; overflow-x: auto; text-align: left; max-height: 400px;"></pre>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeModal('dataModal')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Result Modal -->
+  <div id="resultModal" class="modal">
+    <div class="modal-content">
+      <h2 id="resultTitle">✅ Listo</h2>
+      <p id="resultMessage" style="color: var(--text-secondary);"></p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeModal('resultModal')">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const BACKUP_KEY = 'dashboardBackups';
+    
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      document.getElementById('clock-time').textContent = time;
+      document.getElementById('clock-date').textContent = date;
+    }
+    
+    function updateStatus() {
+      const db = JSON.parse(localStorage.getItem(DB_NAME) || '{"income":[],"expenses":[],"debts":[],"habits":[]}');
+      document.getElementById('statusIncome').textContent = db.income?.length || 0;
+      document.getElementById('statusExpenses').textContent = db.expenses?.length || 0;
+      document.getElementById('statusDebts').textContent = db.debts?.length || 0;
+      document.getElementById('statusHabits').textContent = db.habits?.length || 0;
+    }
+    
+    function importData() {
+      document.getElementById('csvInput').click();
+    }
+    
+    function handleCSVImport(file) {
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result;
+        const lines = content.split('\n');
+        
+        const existingDB = JSON.parse(localStorage.getItem(DB_NAME) || 'null');
+        const db = existingDB ? { ...existingDB } : {
+          income: [],
+          expenses: [],
+          debts: [],
+          habits: [],
+          categories: {
+            expenses: ['General', 'Comida', 'Transporte', 'Ocio', 'Salud'],
+            habits: ['Salud', 'Finanzas', 'Personal', 'Trabajo']
+          }
+        };
+        
+        let currentSection = '';
+        let importedData = { income: 0, expenses: 0, debts: 0, habits: 0 };
+        
+        lines.forEach(line => {
+          line = line.trim();
+          if (!line || line.startsWith('---')) return;
+          
+          if (line.startsWith('Fecha,Fuente')) { currentSection = 'income'; return; }
+          if (line.startsWith('Fecha,Categoria')) { currentSection = 'expense'; return; }
+          if (line.includes('Acreedor')) { currentSection = 'debt'; return; }
+          if (line.startsWith('Nombre')) { currentSection = 'habit'; return; }
+          
+          const parts = line.split(',');
+          
+          if (currentSection === 'income' && parts.length >= 3) {
+            db.income.push({
+              id: Date.now() + Math.random(),
+              date: parts[0],
+              source: parts[1],
+              amount: parseFloat(parts[2])
+            });
+            importedData.income++;
+          }
+          
+          if (currentSection === 'expense' && parts.length >= 3) {
+            db.expenses.push({
+              id: Date.now() + Math.random(),
+              date: parts[0],
+              category: parts[1],
+              amount: parseFloat(parts[2])
+            });
+            importedData.expenses++;
+          }
+          
+          if (currentSection === 'debt' && parts.length >= 4) {
+            db.debts.push({
+              id: Date.now() + Math.random(),
+              creditor: parts[0],
+              totalAmount: parseFloat(parts[1]),
+              amountToPay: parseFloat(parts[2]),
+              dueDate: parts[3]
+            });
+            importedData.debts++;
+          }
+          
+          if (currentSection === 'habit' && parts.length >= 2) {
+            const today = new Date().toISOString().split('T')[0];
+            db.habits.push({
+              id: Date.now() + Math.random(),
+              name: parts[0],
+              category: parts.length >= 5 && parts[4] ? parts[4] : 'General',
+              frequency: parts[1] || 'Diario',
+              notes: parts.length > 2 ? parts[2].replace(/"/g, '') : '',
+              completed: parts.length > 3 && parts[3].toLowerCase() === 'si',
+              archived: false,
+              history: parts.length > 3 && parts[3].toLowerCase() === 'si' ? [today] : []
+            });
+            importedData.habits++;
+          }
+        });
+        
+        localStorage.setItem(DB_NAME, JSON.stringify(db));
+        updateStatus();
+        showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos`);
+      };
+      reader.readAsText(file);
+    }
+    
+    function exportData() {
+      try {
+        const db = JSON.parse(localStorage.getItem(DB_NAME) || '{}');
+        
+        let csv = '--- INGRESOS ---\nFecha,Fuente,Monto\n';
+        (db.income || []).forEach(i => csv += `${i.date},${i.source},${i.amount}\n`);
+        
+        csv += '\n--- GASTOS ---\nFecha,Categoria,Monto\n';
+        (db.expenses || []).forEach(e => csv += `${e.date},${e.category},${e.amount}\n`);
+        
+        csv += '\n--- DEUDAS ---\nAcreedor,Monto Total,Monto a Pagar,Fecha\n';
+        (db.debts || []).forEach(d => csv += `${d.creditor},${d.totalAmount},${d.amountToPay},${d.dueDate}\n`);
+        
+        csv += '\n--- HABITOS ---\nNombre,Frecuencia,Notas,Completado\n';
+        (db.habits || []).forEach(h => csv += `${h.name},${h.frequency},"${h.notes || ''}",${h.completed ? 'Si' : 'No'}\n`);
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dashboard_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        showResult('Exportacion Completa', `CSV generado con ${(db.income || []).length + (db.expenses || []).length + (db.debts || []).length + (db.habits || []).length} registros`);
+      } catch (e) {
+        alert('Error al exportar: ' + e.message);
+      }
+    }
+    
+    function createBackup() {
+      try {
+        const db = localStorage.getItem(DB_NAME);
+        if (!db) {
+          showResult('Sin datos', 'No hay datos para respaldar.');
+          return;
+        }
+        
+        const backups = JSON.parse(localStorage.getItem(BACKUP_KEY) || '[]');
+        const backup = {
+          id: Date.now(),
+          date: new Date().toLocaleString('es-ES'),
+          data: db,
+          size: new Blob([db]).size
+        };
+        
+        backups.unshift(backup);
+        if (backups.length > 10) backups.pop();
+        
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(backups));
+        showResult('Backup Guardado', `Backup #${backups.length} creado correctamente.`);
+      } catch (e) {
+        alert('Error al crear backup: ' + e.message);
+      }
+    }
+    
+    function openRestoreModal() {
+      const backups = JSON.parse(localStorage.getItem(BACKUP_KEY) || '[]');
+      const list = document.getElementById('backupList');
+      
+      if (backups.length === 0) {
+        list.innerHTML = '<div class="no-backups">No hay backups guardados</div>';
+      } else {
+        list.innerHTML = backups.map((b, i) => `
+          <div class="backup-item" onclick="restoreBackup(${i})">
+            <div>
+              <div class="backup-date">${b.date}</div>
+              <div class="backup-size">${formatBytes(b.size)}</div>
+            </div>
+            <span>📂</span>
+          </div>
+        `).join('');
+      }
+      
+      document.getElementById('restoreModal').classList.add('active');
+    }
+    
+    function restoreBackup(index) {
+      const backups = JSON.parse(localStorage.getItem(BACKUP_KEY) || '[]');
+      if (backups[index]) {
+        if (confirm('¿Restaurar este backup? Los datos actuales se reemplazarán.')) {
+          localStorage.setItem(DB_NAME, backups[index].data);
+          updateStatus();
+          closeModal('restoreModal');
+          showResult('📂 Backup Restaurado', 'Tus datos han sido restaurados correctamente.');
+        }
+      }
+    }
+    
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    
+    function confirmClearData() {
+      document.getElementById('clearModal').classList.add('active');
+    }
+    
+    function clearAllData() {
+      localStorage.removeItem(DB_NAME);
+      localStorage.removeItem(BACKUP_KEY);
+      localStorage.removeItem('theme');
+      closeModal('clearModal');
+      updateStatus();
+      showResult('🗑️ Datos Eliminados', 'Todos los datos han sido borrados.');
+    }
+    
+    function openDataModal() {
+      const db = localStorage.getItem(DB_NAME) || '{}';
+      document.getElementById('dataPreview').textContent = JSON.stringify(JSON.parse(db), null, 2);
+      document.getElementById('dataModal').classList.add('active');
+    }
+    
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+    
+    function showResult(title, message) {
+      document.getElementById('resultTitle').textContent = title;
+      document.getElementById('resultMessage').textContent = message;
+      document.getElementById('resultModal').classList.add('active');
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      updateStatus();
+      updateClock();
+      setInterval(updateClock, 1000);
+    });
+  </script>
+</body>
+</html>

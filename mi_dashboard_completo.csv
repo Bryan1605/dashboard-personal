@@ -1,0 +1,20 @@
+--- INGRESOS ---
+Fecha,Fuente,Monto
+2026-03-20,Bono Semanal,17
+
+--- GASTOS ---
+Fecha,Categoria,Monto
+2026-03-21,Comida Semanal,10
+
+--- DEUDAS ---
+Acreedor,Monto Total,Monto a Pagar,Fecha Vencimiento
+Cashea,4,4,2026-04-01
+Cashea,2,2,2026-04-02
+Cashea,4,4,2026-04-15
+Cashea,2,2,2026-04-16
+Cashea,4,4,2026-04-29
+Cashea,2,2,2026-04-30
+
+--- HABITOS ---
+Nombre,Frecuencia,Notas,Completado
+Leer 1 Capitulo de Ezequiel,Diario,"",Si

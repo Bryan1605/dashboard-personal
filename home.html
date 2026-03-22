@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inicio - Dashboard Personal</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .home-page {
+      text-align: center;
+      padding-top: 20px;
+    }
+    
+    .welcome-card {
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      color: white;
+      padding: 32px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+    }
+    
+    .welcome-card h1 {
+      color: white;
+      margin-bottom: 8px;
+    }
+    
+    .welcome-card p {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+    
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .quick-stat {
+      background: var(--card);
+      padding: 20px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .quick-stat-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+    
+    .quick-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    
+    .quick-stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    
+    .quick-link {
+      background: var(--card);
+      padding: 24px 16px;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+    
+    .quick-link:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary);
+    }
+    
+    .quick-link-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+    
+    .quick-link-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    
+    .quick-link-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    .greeting {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+    
+    @media (min-width: 768px) {
+      .quick-stats {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .quick-links {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container home-page">
+    <div class="welcome-card">
+      <h1>Bienvenido a tu Dashboard</h1>
+      <p id="greeting">Gestiona tus finanzas y hábitos de forma sencilla</p>
+    </div>
+    
+    <div class="quick-stats" id="quickStats">
+      <div class="quick-stat">
+        <div class="quick-stat-icon">📈</div>
+        <div class="quick-stat-value" id="statIncome">$0</div>
+        <div class="quick-stat-label">Ingresos</div>
+      </div>
+      <div class="quick-stat">
+        <div class="quick-stat-icon">📉</div>
+        <div class="quick-stat-value" id="statExpenses">$0</div>
+        <div class="quick-stat-label">Gastos</div>
+      </div>
+      <div class="quick-stat">
+        <div class="quick-stat-icon">💳</div>
+        <div class="quick-stat-value" id="statDebts">$0</div>
+        <div class="quick-stat-label">Deudas</div>
+      </div>
+      <div class="quick-stat">
+        <div class="quick-stat-icon">🎯</div>
+        <div class="quick-stat-value" id="statHabits">0/0</div>
+        <div class="quick-stat-label">Hábitos</div>
+      </div>
+    </div>
+    
+    <h2 style="text-align: left; margin-bottom: 16px;">Accesos Rápidos</h2>
+    
+    <div class="quick-links">
+      <a href="index.html" class="quick-link">
+        <div class="quick-link-icon">📊</div>
+        <div class="quick-link-title">Dashboard</div>
+        <div class="quick-link-desc">Ver métricas y gráficos</div>
+      </a>
+      <a href="index.html#ingreso" class="quick-link">
+        <div class="quick-link-icon">💵</div>
+        <div class="quick-link-title">Añadir Ingreso</div>
+        <div class="quick-link-desc">Registrar nuevo ingreso</div>
+      </a>
+      <a href="index.html#gasto" class="quick-link">
+        <div class="quick-link-icon">🛒</div>
+        <div class="quick-link-title">Añadir Gasto</div>
+        <div class="quick-link-desc">Registrar nuevo gasto</div>
+      </a>
+      <a href="habits.html" class="quick-link">
+        <div class="quick-link-icon">🎯</div>
+        <div class="quick-link-title">Hábitos</div>
+        <div class="quick-link-desc">Gestionar hábitos</div>
+      </a>
+      <a href="data.html" class="quick-link">
+        <div class="quick-link-icon">💾</div>
+        <div class="quick-link-title">Respaldos</div>
+        <div class="quick-link-desc">Importar/Exportar datos</div>
+      </a>
+      <a href="habits.html#nuevo" class="quick-link">
+        <div class="quick-link-icon">➕</div>
+        <div class="quick-link-title">Nuevo Hábito</div>
+        <div class="quick-link-desc">Crear nuevo hábito</div>
+      </a>
+    </div>
+  </div>
+  
+  <!-- Windows Taskbar -->
+  <nav class="taskbar">
+    <div class="taskbar-right">
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+    </div>
+    
+    <div class="taskbar-center">
+      <a href="home.html" class="taskbar-item active">
+        <span class="icon">🏠</span>
+        <span>Inicio</span>
+      </a>
+      <a href="index.html" class="taskbar-item">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="habits.html" class="taskbar-item">
+        <span class="icon">🎯</span>
+        <span>Hábitos</span>
+      </a>
+      <a href="data.html" class="taskbar-item">
+        <span class="icon">⚙️</span>
+        <span>Datos</span>
+      </a>
+    </div>
+    
+    <div class="taskbar-right">
+      <div class="taskbar-clock">
+        <span class="taskbar-clock-time" id="clock-time">00:00</span>
+        <span id="clock-date">01/01/2026</span>
+      </div>
+    </div>
+  </nav>
+
+  <script src="app.js"></script>
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      document.getElementById('clock-time').textContent = time;
+      document.getElementById('clock-date').textContent = date;
+    }
+    
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      let greeting = 'Buenos días';
+      if (hour >= 12 && hour < 18) greeting = 'Buenas tardes';
+      else if (hour >= 18) greeting = 'Buenas noches';
+      document.getElementById('greeting').textContent = greeting + '! Gestiona tus finanzas y hábitos de forma sencilla';
+    }
+    
+    function loadStats() {
+      const db = JSON.parse(localStorage.getItem(DB_NAME) || '{"income":[],"expenses":[],"debts":[],"habits":[]}');
+      
+      const totalIncome = db.income.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+      const totalExpenses = db.expenses.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+      const totalDebts = db.debts.reduce((sum, i) => sum + parseFloat(i.amountToPay || 0), 0);
+      const habits = db.habits.filter(h => !h.archived);
+      const completedToday = habits.filter(h => {
+        const today = new Date().toISOString().split('T')[0];
+        return h.history && h.history.includes(today);
+      }).length;
+      
+      document.getElementById('statIncome').textContent = '$' + totalIncome.toFixed(0);
+      document.getElementById('statExpenses').textContent = '$' + totalExpenses.toFixed(0);
+      document.getElementById('statDebts').textContent = '$' + totalDebts.toFixed(0);
+      document.getElementById('statHabits').textContent = completedToday + '/' + habits.length;
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      updateClock();
+      updateGreeting();
+      loadStats();
+      setInterval(updateClock, 1000);
+    });
+  </script>
+</body>
+</html>

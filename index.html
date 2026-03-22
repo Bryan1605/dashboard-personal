@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Personal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Dashboard Personal</h1>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card income">
+        <div class="kpi-label">Ingresos</div>
+        <div class="kpi-value" id="total-income">$0.00</div>
+      </div>
+      <div class="kpi-card expense">
+        <div class="kpi-label">Gastos</div>
+        <div class="kpi-value" id="total-expenses">$0.00</div>
+      </div>
+      <div class="kpi-card debt">
+        <div class="kpi-label">Deudas</div>
+        <div class="kpi-value" id="total-debts">$0.00</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h2>Ingresos vs Gastos</h2>
+        </div>
+        <div id="bar-chart" class="bar-chart"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Gastos por Categoría</h2>
+        </div>
+        <div id="donut-chart"></div>
+      </div>
+    </div>
+
+    <div class="main-layout mt-md">
+      <!-- Left Column: Forms -->
+      <div class="card">
+        <h2>📝 Registrar Transacción</h2>
+
+        <!-- Income Form -->
+        <div class="section-header">
+          <h3>Ingreso</h3>
+        </div>
+        <form id="income-form">
+          <div class="form-group">
+            <label for="income-source">Fuente</label>
+            <input type="text" id="income-source" class="input" placeholder="Ej: Salario, Freelance" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="income-amount">Monto</label>
+              <input type="number" id="income-amount" class="input" placeholder="0.00" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label for="income-date">Fecha</label>
+              <input type="date" id="income-date" class="input" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary" style="width: 100%;">+ Añadir Ingreso</button>
+        </form>
+
+        <!-- Expense Form -->
+        <div class="section-header mt-md">
+          <h3>Gasto</h3>
+        </div>
+        <form id="expense-form">
+          <div class="form-group">
+            <label for="expense-category">Categoría</label>
+            <input type="text" id="expense-category" class="input" list="expense-categories" placeholder="Selecciona o escribe" required>
+            <datalist id="expense-categories"></datalist>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="expense-amount">Monto</label>
+              <input type="number" id="expense-amount" class="input" placeholder="0.00" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label for="expense-date">Fecha</label>
+              <input type="date" id="expense-date" class="input" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">+ Añadir Gasto</button>
+        </form>
+
+        <!-- Debt Form -->
+        <div class="section-header mt-md">
+          <h3>Deuda</h3>
+        </div>
+        <form id="debt-form">
+          <div class="form-group">
+            <label for="debt-creditor">Acreedor</label>
+            <input type="text" id="debt-creditor" class="input" placeholder="Nombre del acreedor" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="debt-total-amount">Monto Total</label>
+              <input type="number" id="debt-total-amount" class="input" placeholder="0.00" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label for="debt-due-amount">A Pagar</label>
+              <input type="number" id="debt-due-amount" class="input" placeholder="0.00" step="0.01" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="debt-due-date">Fecha Límite</label>
+            <input type="date" id="debt-due-date" class="input" required>
+          </div>
+          <button type="submit" class="btn btn-danger" style="width: 100%;">+ Añadir Deuda</button>
+        </form>
+
+        <!-- Category Management -->
+        <div class="section-header mt-md">
+          <h3>Categorías de Gastos</h3>
+        </div>
+        <div class="form-row">
+          <input type="text" id="new-expense-cat" class="input" placeholder="Nueva categoría">
+          <button class="btn btn-primary" onclick="addCategory('expenses', document.getElementById('new-expense-cat').value)">+</button>
+        </div>
+        <div id="expense-category-list" class="category-list"></div>
+
+        <!-- Export -->
+        <div class="export-section">
+          <a href="data.html" class="btn btn-secondary" style="text-decoration: none;">
+            ⚙️ Gestión de Datos
+          </a>
+        </div>
+      </div>
+
+        <!-- Right Column: History & Habits -->
+      <div class="card">
+        <div class="section-header">
+          <h2>📜 Historial</h2>
+        </div>
+
+        <h3 class="text-secondary">Ingresos</h3>
+        <div id="income-list" class="mb-md transaction-list"></div>
+
+        <h3 class="text-secondary">Gastos</h3>
+        <div id="expense-list" class="mb-md transaction-list"></div>
+
+        <h3 class="text-secondary">Deudas</h3>
+        <div id="debt-list" class="mb-md transaction-list"></div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: var(--space-lg) 0;">
+
+        <div class="section-header">
+          <h2>🎯 Hábitos de Hoy</h2>
+        </div>
+        <div class="progress-ring-container" style="justify-content: center;">
+          <span class="progress-title">Progreso:</span>
+          <span id="habit-summary" style="font-weight: 700; color: var(--secondary);">0/0</span>
+        </div>
+        <div id="habit-mini-list" class="mt-md"></div>
+
+        <div class="export-section mt-md">
+          <a href="habits.html" class="btn btn-primary" style="text-decoration: none;">
+            ⚙️ Gestionar Hábitos
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Windows Taskbar -->
+  <nav class="taskbar">
+    <div class="taskbar-right">
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+    </div>
+    
+    <div class="taskbar-center">
+      <a href="home.html" class="taskbar-item">
+        <span class="icon">🏠</span>
+        <span>Inicio</span>
+      </a>
+      <a href="index.html" class="taskbar-item active">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="habits.html" class="taskbar-item">
+        <span class="icon">🎯</span>
+        <span>Hábitos</span>
+      </a>
+      <a href="data.html" class="taskbar-item">
+        <span class="icon">⚙️</span>
+        <span>Datos</span>
+      </a>
+    </div>
+    
+    <div class="taskbar-right">
+      <div class="taskbar-clock">
+        <span class="taskbar-clock-time" id="clock-time">00:00</span>
+        <span id="clock-date">01/01/2026</span>
+      </div>
+    </div>
+  </nav>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('income-date').value = today;
+      document.getElementById('expense-date').value = today;
+      document.getElementById('debt-due-date').value = today;
+    });
+    
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      document.getElementById('clock-time').textContent = time;
+      document.getElementById('clock-date').textContent = date;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    function deleteIncome(id) {
+      if (!confirm('Eliminar este ingreso?')) return;
+      const db = getDB();
+      db.income = db.income.filter(i => i.id !== id);
+      saveDB(db);
+    }
+    
+    function deleteExpense(id) {
+      if (!confirm('Eliminar este gasto?')) return;
+      const db = getDB();
+      db.expenses = db.expenses.filter(e => e.id !== id);
+      saveDB(db);
+    }
+    
+    function deleteDebt(id) {
+      if (!confirm('Eliminar esta deuda?')) return;
+      const db = getDB();
+      db.debts = db.debts.filter(d => d.id !== id);
+      saveDB(db);
+    }
+  </script>
+</body>
+</html>

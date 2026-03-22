@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Hábitos</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      padding-bottom: 140px !important;
+    }
+    .habits-page {
+      padding-bottom: 80px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container habits-page">
+  <div class="container">
+    <h1>🎯 Mis Hábitos</h1>
+    
+    <div class="date-header" id="current-date"></div>
+
+    <!-- Create Habit Form -->
+    <div class="card mt-md">
+      <h2>➕ Nuevo Hábito</h2>
+      <form id="habit-form">
+        <div class="form-group">
+          <label for="habit-input">Nombre del hábito</label>
+          <input type="text" id="habit-input" class="input" placeholder="Ej: Leer 30 minutos" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="habit-notes">Notas / Objetivo (opcional)</label>
+          <input type="text" id="habit-notes" class="input" placeholder="Ej: Terminar el libro de autos">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="habit-category">Categoría</label>
+            <select id="habit-category" class="input"></select>
+          </div>
+          <div class="form-group">
+            <label for="habit-frequency">Frecuencia</label>
+            <select id="habit-frequency" class="input">
+              <option value="Diario">Diario</option>
+              <option value="Semanal">Semanal</option>
+              <option value="Días específicos">Días específicos</option>
+            </select>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-secondary" style="width: 100%;">+ Crear Hábito</button>
+      </form>
+
+      <!-- Category Management -->
+      <div class="section-header mt-md">
+        <h3>Categorías</h3>
+      </div>
+      <div class="form-row">
+        <input type="text" id="new-habit-cat" class="input" placeholder="Nueva categoría">
+        <button class="btn btn-primary" onclick="addCategory('habits', document.getElementById('new-habit-cat').value)">+</button>
+      </div>
+      <div id="habit-category-list" class="category-list"></div>
+    </div>
+
+    <!-- Habit Checklist -->
+    <div class="card mt-md">
+      <div class="section-header">
+        <h2>📋 Mis Hábitos</h2>
+      </div>
+      <div id="habit-checklist"></div>
+    </div>
+
+    <!-- Link back -->
+    <div class="export-section mt-md">
+      <a href="index.html" class="btn btn-ghost" style="text-decoration: none;">
+        ← Volver al Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="edit-modal" class="modal modal-hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>✏️ Editar Hábito</h2>
+        <button class="modal-close" onclick="closeEditModal()">✕</button>
+      </div>
+      <form id="edit-habit-form">
+        <input type="hidden" id="edit-habit-id">
+        
+        <div class="form-group">
+          <label for="edit-habit-input">Nombre</label>
+          <input type="text" id="edit-habit-input" class="input" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="edit-habit-notes">Notas</label>
+          <input type="text" id="edit-habit-notes" class="input">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-habit-category">Categoría</label>
+            <select id="edit-habit-category" class="input"></select>
+          </div>
+          <div class="form-group">
+            <label for="edit-habit-frequency">Frecuencia</label>
+            <select id="edit-habit-frequency" class="input">
+              <option value="Diario">Diario</option>
+              <option value="Semanal">Semanal</option>
+              <option value="Días específicos">Días específicos</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-secondary" style="flex: 1;">💾 Guardar</button>
+          <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Windows Taskbar -->
+  <nav class="taskbar">
+    <div class="taskbar-right">
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+    </div>
+    
+    <div class="taskbar-center">
+      <a href="home.html" class="taskbar-item">
+        <span class="icon">🏠</span>
+        <span>Inicio</span>
+      </a>
+      <a href="index.html" class="taskbar-item">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="habits.html" class="taskbar-item active">
+        <span class="icon">🎯</span>
+        <span>Habitos</span>
+      </a>
+      <a href="data.html" class="taskbar-item">
+        <span class="icon">⚙️</span>
+        <span>Datos</span>
+      </a>
+    </div>
+    
+    <div class="taskbar-right">
+      <div class="taskbar-clock">
+        <span class="taskbar-clock-time" id="clock-time">00:00</span>
+        <span id="clock-date">01/01/2026</span>
+      </div>
+    </div>
+  </nav>
+
+  <script src="app.js"></script>
+  <script>
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      document.getElementById('clock-time').textContent = time;
+      document.getElementById('clock-date').textContent = date;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
