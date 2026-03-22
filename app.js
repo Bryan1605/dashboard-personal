@@ -5,6 +5,28 @@
 
 const DB_NAME = 'personalDashboardDB';
 
+const CURRENCY_SYMBOLS = {
+  USD: '$',
+  EUR: '€'
+};
+
+let isSyncing = false;
+let currentUser = null;
+
+function getCurrency() {
+  return localStorage.getItem('currency') || 'USD';
+}
+
+function formatCurrency(amount) {
+  const currency = getCurrency();
+  const symbol = CURRENCY_SYMBOLS[currency] || '$';
+  return `${symbol}${parseFloat(amount).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function updateDashboardCurrency() {
+  updateDashboard();
+}
+
 // ==========================================
 // DATA HANDLING
 // ==========================================
@@ -25,7 +47,23 @@ function getDB() {
 
 function saveDB(data) {
   localStorage.setItem(DB_NAME, JSON.stringify(data));
+  
+  // Sync to Firebase if authenticated
+  if (typeof db !== 'undefined' && currentUser && !isSyncing) {
+    db.collection('users').doc(currentUser.uid).set(data).catch(err => {
+      console.log('Error syncing to cloud:', err);
+    });
+  }
+  
   updateDashboard();
+}
+
+function signOutUser() {
+  if (typeof auth !== 'undefined') {
+    auth.signOut();
+  }
+  localStorage.removeItem('isLoggedIn');
+  window.location.href = 'login.html';
 }
 
 // ==========================================
@@ -213,13 +251,11 @@ function updateDashboard() {
   const totalExpenses = db.expenses.reduce((sum, i) => sum + parseFloat(i.amount), 0);
   const totalDebts = db.debts.reduce((sum, i) => sum + parseFloat(i.amountToPay), 0);
 
-  // Update KPIs
-  const fmt = (n) => n.toLocaleString('es-ES', { style: 'currency', currency: 'USD' });
-  
+  // Update KPIs with selected currency
   const el = (id) => document.getElementById(id);
-  if (el('total-income')) el('total-income').textContent = fmt(totalIncome);
-  if (el('total-expenses')) el('total-expenses').textContent = fmt(totalExpenses);
-  if (el('total-debts')) el('total-debts').textContent = fmt(totalDebts);
+  if (el('total-income')) el('total-income').textContent = formatCurrency(totalIncome);
+  if (el('total-expenses')) el('total-expenses').textContent = formatCurrency(totalExpenses);
+  if (el('total-debts')) el('total-debts').textContent = formatCurrency(totalDebts);
 
   // Update charts
   updateBarChart(totalIncome, totalExpenses);
@@ -251,7 +287,7 @@ function updateBarChart(income, expenses) {
     <div class="bar-item">
       <div class="bar-wrapper">
         <div class="bar bar-income" style="height: ${incomeHeight}%">
-          <span class="bar-value">$${income.toFixed(0)}</span>
+          <span class="bar-value">${formatCurrency(income)}</span>
         </div>
       </div>
       <span class="bar-label">Ingresos</span>
@@ -259,7 +295,7 @@ function updateBarChart(income, expenses) {
     <div class="bar-item">
       <div class="bar-wrapper">
         <div class="bar bar-expense" style="height: ${expenseHeight}%">
-          <span class="bar-value">$${expenses.toFixed(0)}</span>
+          <span class="bar-value">${formatCurrency(expenses)}</span>
         </div>
       </div>
       <span class="bar-label">Gastos</span>
@@ -304,7 +340,7 @@ function updateDonutChart(expenses) {
     <div class="donut-container">
       <div class="donut-chart" style="background: conic-gradient(${gradientParts.join(', ')});">
         <div class="donut-center">
-          <div class="donut-total">$${total.toFixed(0)}</div>
+          <div class="donut-total">${formatCurrency(total)}</div>
           <div class="donut-label">Total</div>
         </div>
       </div>
@@ -312,7 +348,7 @@ function updateDonutChart(expenses) {
         ${labels.map((label, i) => `
           <div class="legend-item">
             <span class="legend-color" style="background: ${colors[i % colors.length]}"></span>
-            <span>${label}: $${map[label].toFixed(0)}</span>
+            <span>${label}: ${formatCurrency(map[label])}</span>
           </div>
         `).join('')}
       </div>
@@ -333,8 +369,8 @@ function renderTransactionLists() {
     incomeList.innerHTML = db.income.slice(-5).reverse().map(i => `
       <div class="flex items-center justify-between gap-sm transaction-item">
         <span>${i.date}: ${i.source}</span>
-        <span style="color: var(--secondary);">$${parseFloat(i.amount).toFixed(2)}</span>
-        <button class="btn-delete" onclick="deleteIncome(${i.id})" title="Eliminar">×</button>
+        <span style="color: var(--secondary);">${formatCurrency(i.amount)}</span>
+        <button class="btn-delete" onclick="deleteIncome(${i.id})" title="Eliminar">x</button>
       </div>
     `).join('') || '<p class="text-secondary">Sin ingresos registrados</p>';
   }
@@ -345,8 +381,8 @@ function renderTransactionLists() {
     expenseList.innerHTML = db.expenses.slice(-5).reverse().map(e => `
       <div class="flex items-center justify-between gap-sm transaction-item">
         <span>${e.date} [${e.category}]</span>
-        <span style="color: var(--danger);">-$${parseFloat(e.amount).toFixed(2)}</span>
-        <button class="btn-delete" onclick="deleteExpense(${e.id})" title="Eliminar">×</button>
+        <span style="color: var(--danger);">-${formatCurrency(e.amount)}</span>
+        <button class="btn-delete" onclick="deleteExpense(${e.id})" title="Eliminar">x</button>
       </div>
     `).join('') || '<p class="text-secondary">Sin gastos registrados</p>';
   }
@@ -357,8 +393,8 @@ function renderTransactionLists() {
     debtList.innerHTML = db.debts.map(d => `
       <div class="flex items-center justify-between gap-sm transaction-item">
         <span>${d.creditor}</span>
-        <span style="color: var(--warning);">$${parseFloat(d.amountToPay).toFixed(2)}</span>
-        <button class="btn-delete" onclick="deleteDebt(${d.id})" title="Eliminar">×</button>
+        <span style="color: var(--warning);">${formatCurrency(d.amountToPay)}</span>
+        <button class="btn-delete" onclick="deleteDebt(${d.id})" title="Eliminar">x</button>
       </div>
     `).join('') || '<p class="text-secondary">Sin deudas registradas</p>';
   }

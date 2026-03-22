@@ -187,9 +187,13 @@
         <span class="icon">📊</span>
         <span>Dashboard</span>
       </a>
+      <a href="converter.html" class="taskbar-item">
+        <span class="icon">💱</span>
+        <span>Conversor</span>
+      </a>
       <a href="habits.html" class="taskbar-item">
         <span class="icon">🎯</span>
-        <span>Hábitos</span>
+        <span>Habitos</span>
       </a>
       <a href="data.html" class="taskbar-item">
         <span class="icon">⚙️</span>
@@ -206,13 +210,41 @@
   </nav>
 
   <script src="app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <script>
+    let currentUser = null;
+    
     document.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('income-date').value = today;
       document.getElementById('expense-date').value = today;
       document.getElementById('debt-due-date').value = today;
+      
+      if (typeof auth !== 'undefined') {
+        auth.onAuthStateChanged(user => {
+          currentUser = user;
+          if (user) {
+            syncFromCloud();
+          }
+        });
+      }
     });
+    
+    async function syncFromCloud() {
+      if (typeof db === 'undefined' || !currentUser) return;
+      try {
+        const doc = await db.collection('users').doc(currentUser.uid).get();
+        if (doc.exists) {
+          localStorage.setItem(DB_NAME, JSON.stringify(doc.data()));
+          if (typeof updateDashboard === 'function') updateDashboard();
+        }
+      } catch (err) {
+        console.log('Error syncing:', err);
+      }
+    }
     
     function updateClock() {
       const now = new Date();

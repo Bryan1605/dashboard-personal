@@ -198,6 +198,17 @@
       font-size: 0.875rem;
       color: var(--text-secondary);
     }
+    
+    .currency-selector {
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    
+    .currency-selector select {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -277,6 +288,19 @@
         </div>
       </div>
       
+      <div class="status-section">
+        <h2 style="margin-bottom: 16px;">💰 Moneda</h2>
+        <div class="currency-selector">
+          <select id="currency-select" class="input" onchange="saveCurrency(this.value)">
+            <option value="USD">$ USD - Dólar estadounidense</option>
+            <option value="EUR">€ EUR - Euro</option>
+          </select>
+        </div>
+        <p class="text-secondary" style="margin-top: 12px; font-size: 0.875rem;">
+          Todos los valores se mostrarán en la moneda seleccionada.
+        </p>
+      </div>
+      
       <div class="info-box">
         💡 <strong>Tip:</strong> Los backups locales se guardan en tu navegador. Si cambias de navegador o borras los datos del navegador, perderás los backups. Usa Exportar regularmente para tener copias de seguridad externas.
       </div>
@@ -297,6 +321,10 @@
       <a href="index.html" class="taskbar-item">
         <span class="icon">📊</span>
         <span>Dashboard</span>
+      </a>
+      <a href="converter.html" class="taskbar-item">
+        <span class="icon">💱</span>
+        <span>Conversor</span>
       </a>
       <a href="habits.html" class="taskbar-item">
         <span class="icon">🎯</span>
@@ -366,6 +394,10 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <script>
     const BACKUP_KEY = 'dashboardBackups';
     
@@ -383,6 +415,20 @@
       document.getElementById('statusExpenses').textContent = db.expenses?.length || 0;
       document.getElementById('statusDebts').textContent = db.debts?.length || 0;
       document.getElementById('statusHabits').textContent = db.habits?.length || 0;
+    }
+    
+    function saveCurrency(currency) {
+      localStorage.setItem('currency', currency);
+      if (typeof updateDashboardCurrency === 'function') {
+        updateDashboardCurrency();
+      }
+    }
+    
+    function loadCurrency() {
+      const saved = localStorage.getItem('currency') || 'USD';
+      const select = document.getElementById('currency-select');
+      if (select) select.value = saved;
+      return saved;
     }
     
     function importData() {
@@ -603,6 +649,7 @@
     
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
+      loadCurrency();
       updateStatus();
       updateClock();
       setInterval(updateClock, 1000);

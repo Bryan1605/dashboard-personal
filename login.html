@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesion - Dashboard Personal</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .auth-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .auth-logo-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+    
+    .auth-logo h1 {
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    
+    .auth-logo p {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    .auth-tabs {
+      display: flex;
+      margin-bottom: 24px;
+      border-radius: var(--radius-sm);
+      background: var(--input-bg);
+      padding: 4px;
+    }
+    
+    .auth-tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .auth-tab.active {
+      background: var(--card);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .auth-form {
+      display: none;
+    }
+    
+    .auth-form.active {
+      display: block;
+    }
+    
+    .auth-error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+      font-size: 0.875rem;
+      display: none;
+    }
+    
+    .auth-error.show {
+      display: block;
+    }
+    
+    .auth-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--secondary);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+      font-size: 0.875rem;
+      display: none;
+    }
+    
+    .auth-success.show {
+      display: block;
+    }
+    
+    .skip-link {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .skip-link a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+    
+    .skip-link a:hover {
+      color: var(--primary);
+    }
+    
+    .demo-notice {
+      background: var(--input-bg);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 24px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+    
+    .demo-notice strong {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">📊</div>
+        <h1>Dashboard Personal</h1>
+        <p>Sincroniza tus datos en la nube</p>
+      </div>
+      
+      <div class="demo-notice">
+        <strong>Prueba rapida:</strong> Usa cualquier email y contrasena para probar. No requiere verificacion.
+      </div>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Iniciar Sesion</button>
+        <button class="auth-tab" data-tab="signup">Crear Cuenta</button>
+      </div>
+      
+      <div id="auth-error" class="auth-error"></div>
+      <div id="auth-success" class="auth-success"></div>
+      
+      <form id="login-form" class="auth-form active">
+        <div class="form-group">
+          <label for="login-email">Correo electronico</label>
+          <input type="email" id="login-email" class="input" placeholder="tu@email.com" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password">Contrasena</label>
+          <input type="password" id="login-password" class="input" placeholder="Tu contrasena" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Entrar</button>
+      </form>
+      
+      <form id="signup-form" class="auth-form">
+        <div class="form-group">
+          <label for="signup-email">Correo electronico</label>
+          <input type="email" id="signup-email" class="input" placeholder="tu@email.com" required>
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Contrasena</label>
+          <input type="password" id="signup-password" class="input" placeholder="Minimo 6 caracteres" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-secondary" style="width: 100%; margin-top: 16px;">Crear Cuenta</button>
+      </form>
+      
+      <div class="skip-link">
+        <a href="home.html">Usar modo local (sin sincronizacion)</a>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const authError = document.getElementById('auth-error');
+    const authSuccess = document.getElementById('auth-success');
+    const tabs = document.querySelectorAll('.auth-tab');
+    
+    // Tab switching
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        document.getElementById(tab.dataset.tab + '-form').classList.add('active');
+        authError.classList.remove('show');
+        authSuccess.classList.remove('show');
+      });
+    });
+    
+    // Login
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      
+      authError.classList.remove('show');
+      authSuccess.classList.remove('show');
+      
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        window.location.href = 'home.html';
+      } catch (error) {
+        authError.textContent = error.message;
+        authError.classList.add('show');
+      }
+    });
+    
+    // Signup
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      
+      authError.classList.remove('show');
+      authSuccess.classList.remove('show');
+      
+      try {
+        await auth.createUserWithEmailAndPassword(email, password);
+        authSuccess.textContent = 'Cuenta creada. Redirigiendo...';
+        authSuccess.classList.add('show');
+        setTimeout(() => window.location.href = 'home.html', 1500);
+      } catch (error) {
+        authError.textContent = error.message;
+        authError.classList.add('show');
+      }
+    });
+    
+    // Check if already logged in
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        window.location.href = 'home.html';
+      }
+    });
+  </script>
+</body>
+</html>

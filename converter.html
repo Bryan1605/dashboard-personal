@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversor BS - USD</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .converter-page {
+      text-align: center;
+      padding-top: 20px;
+    }
+    
+    .converter-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      max-width: 400px;
+      margin: 0 auto;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .converter-title {
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+    
+    .converter-input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    
+    .converter-input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .converter-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .converter-input-row input {
+      flex: 1;
+    }
+    
+    .rate-badge {
+      background: linear-gradient(135deg, var(--secondary), #0D9668);
+      color: white;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+    
+    .rate-badge .rate-value {
+      font-size: 1.5rem;
+      display: block;
+      margin-top: 4px;
+    }
+    
+    .rate-badge.error {
+      background: var(--danger);
+    }
+    
+    .rate-badge.loading {
+      background: var(--primary);
+    }
+    
+    .swap-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 1rem;
+      width: 100%;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+    }
+    
+    .swap-btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    .result-box {
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      color: white;
+      padding: 24px;
+      border-radius: var(--radius-md);
+    }
+    
+    .result-label {
+      font-size: 0.875rem;
+      opacity: 0.9;
+    }
+    
+    .result-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    
+    .refresh-btn {
+      background: transparent;
+      border: 2px solid var(--secondary);
+      color: var(--secondary);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-top: 16px;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    
+    .refresh-btn:hover {
+      background: var(--secondary);
+      color: white;
+    }
+    
+    .direction-indicator {
+      background: var(--input-bg);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+    
+    .currency-selector {
+      margin-bottom: 16px;
+    }
+    
+    .currency-selector select {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container converter-page">
+      <div class="converter-card">
+      <h1 class="converter-title">Conversor BS - USD/EUR</h1>
+      
+      <div class="rate-badge loading" id="rate-badge">
+        Tasa BCV
+        <span class="rate-value" id="rate-value">Obteniendo...</span>
+      </div>
+      
+      <div class="currency-selector">
+        <select id="currency-select" class="input">
+          <option value="USD">USD - Dolar</option>
+          <option value="EUR">EUR - Euro</option>
+        </select>
+      </div>
+      
+      <div class="direction-indicator" id="direction">BS → USD</div>
+      
+      <div class="converter-input-group">
+        <label>Bolivares (BS)</label>
+        <div class="converter-input-row">
+          <input type="number" id="bs-input" class="input" placeholder="0.00" value="1000">
+        </div>
+      </div>
+      
+      <button class="swap-btn" id="convert-btn">
+        Convertir a USD
+      </button>
+      
+      <div class="converter-input-group">
+        <label>Dolares (USD)</label>
+        <div class="converter-input-row">
+          <input type="number" id="usd-input" class="input" placeholder="0.00">
+        </div>
+      </div>
+      
+      <div class="result-box">
+        <div class="result-label">Resultado</div>
+        <div class="result-value" id="result">$0.00 USD</div>
+      </div>
+      
+      <button class="refresh-btn" id="refresh-btn">
+        Actualizar tasa BCV
+      </button>
+    </div>
+  </div>
+  
+  <!-- Windows Taskbar -->
+  <nav class="taskbar">
+    <div class="taskbar-right">
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+    </div>
+    
+    <div class="taskbar-center">
+      <a href="home.html" class="taskbar-item">
+        <span class="icon">🏠</span>
+        <span>Inicio</span>
+      </a>
+      <a href="index.html" class="taskbar-item">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="converter.html" class="taskbar-item active">
+        <span class="icon">💱</span>
+        <span>Conversor</span>
+      </a>
+      <a href="habits.html" class="taskbar-item">
+        <span class="icon">🎯</span>
+        <span>Habitos</span>
+      </a>
+      <a href="data.html" class="taskbar-item">
+        <span class="icon">⚙️</span>
+        <span>Datos</span>
+      </a>
+    </div>
+    
+    <div class="taskbar-right">
+      <div class="taskbar-clock">
+        <span class="taskbar-clock-time" id="clock-time">00:00</span>
+        <span id="clock-date">01/01/2026</span>
+      </div>
+    </div>
+  </nav>
+
+  <script src="app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    (function() {
+      const API_URL = 'https://bcv-api.rafnixg.dev/rates/';
+      const STORAGE_KEY_USD = 'bcvRateUSD';
+      const STORAGE_KEY_EUR = 'bcvRateEUR';
+      
+      let rates = { USD: 0, EUR: 0 };
+      let currentCurrency = 'USD';
+      
+      const rateBadge = document.getElementById('rate-badge');
+      const rateValue = document.getElementById('rate-value');
+      const bsInput = document.getElementById('bs-input');
+      const usdInput = document.getElementById('usd-input');
+      const resultEl = document.getElementById('result');
+      const convertBtn = document.getElementById('convert-btn');
+      const refreshBtn = document.getElementById('refresh-btn');
+      const directionEl = document.getElementById('direction');
+      const currencySelect = document.getElementById('currency-select');
+      
+      function updateClock() {
+        const now = new Date();
+        document.getElementById('clock-time').textContent = 
+          now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('clock-date').textContent = 
+          now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+      
+      function getCurrentRate() {
+        return rates[currentCurrency] || 0;
+      }
+      
+      function getCurrencySymbol() {
+        return currentCurrency === 'USD' ? '$' : '€';
+      }
+      
+      function convertBStoCurrency() {
+        const rate = getCurrentRate();
+        if (rate <= 0) return;
+        const bs = parseFloat(bsInput.value) || 0;
+        const result = bs / rate;
+        usdInput.value = result.toFixed(2);
+        const symbol = getCurrencySymbol();
+        resultEl.textContent = symbol + result.toFixed(2) + ' ' + currentCurrency;
+        directionEl.textContent = 'BS → ' + currentCurrency;
+      }
+      
+      function convertCurrencyToBS() {
+        const rate = getCurrentRate();
+        if (rate <= 0) return;
+        const currencyValue = parseFloat(usdInput.value) || 0;
+        const bs = currencyValue * rate;
+        bsInput.value = bs.toFixed(2);
+        resultEl.textContent = bs.toLocaleString('es-ES') + ' BS';
+        directionEl.textContent = currentCurrency + ' → BS';
+      }
+      
+      function updateRateDisplay() {
+        const rate = getCurrentRate();
+        if (rate > 0) {
+          rateBadge.className = 'rate-badge';
+          rateValue.textContent = '1 ' + currentCurrency + ' = ' + rate.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' BS';
+        }
+      }
+      
+      function setRate(currency, rate) {
+        rates[currency] = rate;
+        localStorage.setItem(currency === 'USD' ? STORAGE_KEY_USD : STORAGE_KEY_EUR, rate.toString());
+        updateRateDisplay();
+        convertBStoCurrency();
+      }
+      
+      function setError(message) {
+        rateBadge.className = 'rate-badge error';
+        rateValue.textContent = message;
+      }
+      
+      function setLoading() {
+        rateBadge.className = 'rate-badge loading';
+        rateValue.textContent = 'Obteniendo tasas...';
+      }
+      
+      function changeCurrency() {
+        currentCurrency = currencySelect.value;
+        updateRateDisplay();
+        convertBStoCurrency();
+      }
+      
+      async function fetchRates() {
+        setLoading();
+        try {
+          const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(API_URL);
+          const response = await fetch(proxyUrl);
+          if (!response.ok) throw new Error('Error HTTP ' + response.status);
+          const proxyData = await response.json();
+          const data = JSON.parse(proxyData.contents);
+          
+          if (data.dollar && parseFloat(data.dollar) > 0) {
+            setRate('USD', parseFloat(data.dollar));
+          }
+          if (data.euro && parseFloat(data.euro) > 0) {
+            setRate('EUR', parseFloat(data.euro));
+          }
+          
+          if (!data.dollar && !data.euro) {
+            throw new Error('Tasas invalidas');
+          }
+        } catch (error) {
+          console.error('Error fetching rates:', error);
+          const savedUSD = localStorage.getItem(STORAGE_KEY_USD);
+          const savedEUR = localStorage.getItem(STORAGE_KEY_EUR);
+          if (savedUSD) rates.USD = parseFloat(savedUSD);
+          if (savedEUR) rates.EUR = parseFloat(savedEUR);
+          
+          if (rates.USD > 0 || rates.EUR > 0) {
+            updateRateDisplay();
+            convertBStoCurrency();
+          } else {
+            setError('Sin conexion');
+          }
+        }
+      }
+      
+      // Event listeners
+      bsInput.addEventListener('input', convertBStoCurrency);
+      usdInput.addEventListener('input', convertCurrencyToBS);
+      convertBtn.addEventListener('click', convertBStoCurrency);
+      refreshBtn.addEventListener('click', fetchRates);
+      currencySelect.addEventListener('change', changeCurrency);
+      
+      // Initialize
+      function init() {
+        initTheme();
+        updateClock();
+        setInterval(updateClock, 1000);
+        
+        const savedUSD = localStorage.getItem(STORAGE_KEY_USD);
+        const savedEUR = localStorage.getItem(STORAGE_KEY_EUR);
+        if (savedUSD) rates.USD = parseFloat(savedUSD);
+        if (savedEUR) rates.EUR = parseFloat(savedEUR);
+        
+        fetchRates();
+      }
+      
+      init();
+    })();
+  </script>
+</body>
+</html>

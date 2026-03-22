@@ -104,6 +104,74 @@
       margin-bottom: 16px;
     }
     
+    .taskbar-user {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    
+    .taskbar-user:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .user-menu {
+      position: fixed;
+      bottom: 70px;
+      right: 10px;
+      background: var(--card);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 200px;
+      z-index: 1001;
+      overflow: hidden;
+    }
+    
+    .user-menu.modal-hidden {
+      display: none !important;
+    }
+    
+    .user-menu-content {
+      padding: 8px 0;
+    }
+    
+    .user-info {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    
+    .user-icon {
+      font-size: 1.5rem;
+    }
+    
+    #user-email {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+    
+    .user-menu-item:hover {
+      background: var(--input-bg);
+    }
+    
     @media (min-width: 768px) {
       .quick-stats {
         grid-template-columns: repeat(4, 1fr);
@@ -185,6 +253,7 @@
   <nav class="taskbar">
     <div class="taskbar-right">
       <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+      <button class="taskbar-user" id="user-btn" title="Usuario" onclick="toggleUserMenu()">👤</button>
     </div>
     
     <div class="taskbar-center">
@@ -196,9 +265,13 @@
         <span class="icon">📊</span>
         <span>Dashboard</span>
       </a>
+      <a href="converter.html" class="taskbar-item">
+        <span class="icon">💱</span>
+        <span>Conversor</span>
+      </a>
       <a href="habits.html" class="taskbar-item">
         <span class="icon">🎯</span>
-        <span>Hábitos</span>
+        <span>Habitos</span>
       </a>
       <a href="data.html" class="taskbar-item">
         <span class="icon">⚙️</span>
@@ -213,9 +286,31 @@
       </div>
     </div>
   </nav>
+  
+  <!-- User Menu Dropdown -->
+  <div id="user-menu" class="user-menu modal-hidden">
+    <div class="user-menu-content">
+      <div id="user-info" class="user-info">
+        <span class="user-icon">👤</span>
+        <span id="user-email">No conectado</span>
+      </div>
+      <a href="login.html" class="user-menu-item" id="login-link">
+        <span>🔑</span> Iniciar sesion
+      </a>
+      <a href="#" class="user-menu-item" id="logout-link" onclick="signOutUser(); return false;" style="display: none;">
+        <span>🚪</span> Cerrar sesion
+      </a>
+    </div>
+  </div>
 
   <script src="app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <script>
+    let userEmail = '';
+    
     function updateClock() {
       const now = new Date();
       const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -226,10 +321,25 @@
     
     function updateGreeting() {
       const hour = new Date().getHours();
-      let greeting = 'Buenos días';
+      let greeting = 'Buenos dias';
       if (hour >= 12 && hour < 18) greeting = 'Buenas tardes';
       else if (hour >= 18) greeting = 'Buenas noches';
-      document.getElementById('greeting').textContent = greeting + '! Gestiona tus finanzas y hábitos de forma sencilla';
+      let suffix = userEmail ? ' - ' + userEmail.split('@')[0] : '';
+      document.getElementById('greeting').textContent = greeting + suffix + '! Gestiona tus finanzas y habitos de forma sencilla';
+    }
+    
+    async function syncFromCloud() {
+      if (typeof db === 'undefined' || !currentUser) return;
+      
+      try {
+        const doc = await db.collection('users').doc(currentUser.uid).get();
+        if (doc.exists) {
+          localStorage.setItem(DB_NAME, JSON.stringify(doc.data()));
+          if (typeof loadStats === 'function') loadStats();
+        }
+      } catch (err) {
+        console.log('Error syncing:', err);
+      }
     }
     
     function loadStats() {
@@ -244,18 +354,56 @@
         return h.history && h.history.includes(today);
       }).length;
       
-      document.getElementById('statIncome').textContent = '$' + totalIncome.toFixed(0);
-      document.getElementById('statExpenses').textContent = '$' + totalExpenses.toFixed(0);
-      document.getElementById('statDebts').textContent = '$' + totalDebts.toFixed(0);
+      document.getElementById('statIncome').textContent = formatCurrency(totalIncome);
+      document.getElementById('statExpenses').textContent = formatCurrency(totalExpenses);
+      document.getElementById('statDebts').textContent = formatCurrency(totalDebts);
       document.getElementById('statHabits').textContent = completedToday + '/' + habits.length;
     }
     
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
       updateClock();
-      updateGreeting();
-      loadStats();
       setInterval(updateClock, 1000);
+      
+      // Check Firebase auth state
+      if (typeof auth !== 'undefined') {
+        auth.onAuthStateChanged(user => {
+          if (user) {
+            currentUser = user;
+            userEmail = user.email;
+            document.getElementById('user-email').textContent = user.email;
+            document.getElementById('login-link').style.display = 'none';
+            document.getElementById('logout-link').style.display = 'flex';
+            updateGreeting();
+            syncFromCloud();
+          } else {
+            currentUser = null;
+            userEmail = '';
+            document.getElementById('user-email').textContent = 'No conectado';
+            document.getElementById('login-link').style.display = 'flex';
+            document.getElementById('logout-link').style.display = 'none';
+            updateGreeting();
+          }
+          loadStats();
+        });
+      } else {
+        updateGreeting();
+        loadStats();
+      }
+    });
+    
+    function toggleUserMenu() {
+      const menu = document.getElementById('user-menu');
+      menu.classList.toggle('modal-hidden');
+    }
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('user-menu');
+      const btn = document.getElementById('user-btn');
+      if (!menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.add('modal-hidden');
+      }
     });
   </script>
 </body>
