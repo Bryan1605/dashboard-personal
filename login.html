@@ -241,6 +241,8 @@
       
       try {
         await auth.createUserWithEmailAndPassword(email, password);
+        // Clear localStorage for new user
+        localStorage.removeItem('personalDashboardDB');
         authSuccess.textContent = 'Cuenta creada. Redirigiendo...';
         authSuccess.classList.add('show');
         setTimeout(() => window.location.href = 'home.html', 1500);

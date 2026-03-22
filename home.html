@@ -329,8 +329,7 @@
     }
     
     async function syncFromCloud() {
-      if (typeof db === 'undefined') return;
-      const user = auth.currentUser;
+      const user = getCurrentUser();
       if (!user) return;
       
       try {
@@ -340,7 +339,7 @@
           if (typeof loadStats === 'function') loadStats();
         }
       } catch (err) {
-        console.log('Error syncing:', err);
+        console.error('Error syncing:', err);
       }
     }
     
@@ -369,17 +368,15 @@
       
       // Check Firebase auth state
       if (typeof auth !== 'undefined') {
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async user => {
           if (user) {
-            currentUser = user;
             userEmail = user.email;
             document.getElementById('user-email').textContent = user.email;
             document.getElementById('login-link').style.display = 'none';
             document.getElementById('logout-link').style.display = 'flex';
             updateGreeting();
-            syncFromCloud();
+            await syncFromCloud();
           } else {
-            currentUser = null;
             userEmail = '';
             document.getElementById('user-email').textContent = 'No conectado';
             document.getElementById('login-link').style.display = 'flex';

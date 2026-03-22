@@ -10,9 +10,6 @@ const CURRENCY_SYMBOLS = {
   EUR: '€'
 };
 
-let isSyncing = false;
-let currentUser = null;
-
 function getCurrency() {
   return localStorage.getItem('currency') || 'USD';
 }
@@ -25,6 +22,19 @@ function formatCurrency(amount) {
 
 function updateDashboardCurrency() {
   updateDashboard();
+}
+
+// Check if Firebase is available
+function isFirebaseReady() {
+  return typeof auth !== 'undefined' && typeof db !== 'undefined' && auth.currentUser;
+}
+
+// Get current user
+function getCurrentUser() {
+  if (typeof auth !== 'undefined') {
+    return auth.currentUser;
+  }
+  return null;
 }
 
 // ==========================================
@@ -46,19 +56,48 @@ function getDB() {
 }
 
 function saveDB(data) {
+  // Always save to localStorage first
   localStorage.setItem(DB_NAME, JSON.stringify(data));
   
   // Sync to Firebase if authenticated
-  if (typeof auth !== 'undefined' && typeof db !== 'undefined') {
-    const user = auth.currentUser;
-    if (user && !isSyncing) {
-      db.collection('users').doc(user.uid).set(data)
-        .then(() => console.log('Synced to cloud'))
-        .catch(err => console.log('Error syncing:', err));
-    }
+  const user = getCurrentUser();
+  if (user) {
+    db.collection('users').doc(user.uid).set(data)
+      .then(() => console.log('Saved to cloud:', user.uid))
+      .catch(err => console.error('Cloud save error:', err));
   }
   
   updateDashboard();
+}
+
+function syncFromCloud() {
+  return new Promise((resolve, reject) => {
+    const user = getCurrentUser();
+    if (!user) {
+      console.log('No user, skipping sync');
+      resolve(null);
+      return;
+    }
+    
+    console.log('Syncing from cloud for user:', user.uid);
+    
+    db.collection('users').doc(user.uid).get()
+      .then(doc => {
+        if (doc.exists) {
+          console.log('Cloud data found:', doc.data());
+          const cloudData = doc.data();
+          localStorage.setItem(DB_NAME, JSON.stringify(cloudData));
+          resolve(cloudData);
+        } else {
+          console.log('No cloud data for this user');
+          resolve(null);
+        }
+      })
+      .catch(err => {
+        console.error('Cloud sync error:', err);
+        reject(err);
+      });
+  });
 }
 
 function signOutUser() {

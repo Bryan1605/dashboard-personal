@@ -215,35 +215,26 @@
   <script src="firebase-config.js"></script>
   <script src="app.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('income-date').value = today;
       document.getElementById('expense-date').value = today;
       document.getElementById('debt-due-date').value = today;
       
       if (typeof auth !== 'undefined') {
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async user => {
           if (user) {
-            syncFromCloud();
+            console.log('User logged in:', user.email);
+            try {
+              await syncFromCloud();
+              if (typeof updateDashboard === 'function') updateDashboard();
+            } catch (err) {
+              console.error('Sync error:', err);
+            }
           }
         });
       }
     });
-    
-    async function syncFromCloud() {
-      if (typeof db === 'undefined') return;
-      const user = auth.currentUser;
-      if (!user) return;
-      try {
-        const doc = await db.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          localStorage.setItem(DB_NAME, JSON.stringify(doc.data()));
-          if (typeof updateDashboard === 'function') updateDashboard();
-        }
-      } catch (err) {
-        console.log('Error syncing:', err);
-      }
-    }
     
     function updateClock() {
       const now = new Date();

@@ -167,8 +167,7 @@
   <script src="app.js"></script>
   <script>
     async function syncFromCloud() {
-      if (typeof db === 'undefined') return;
-      const user = auth.currentUser;
+      const user = getCurrentUser();
       if (!user) return;
       try {
         const doc = await db.collection('users').doc(user.uid).get();
@@ -177,7 +176,7 @@
           if (typeof renderHabitChecklist === 'function') renderHabitChecklist();
         }
       } catch (err) {
-        console.log('Error syncing:', err);
+        console.error('Error syncing:', err);
       }
     }
     
