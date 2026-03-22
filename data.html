@@ -516,7 +516,19 @@
           }
         });
         
+        // Save to localStorage
         localStorage.setItem(DB_NAME, JSON.stringify(db));
+        
+        // Sync to Firebase if authenticated
+        if (typeof auth !== 'undefined' && typeof db !== 'undefined') {
+          const user = auth.currentUser;
+          if (user) {
+            firebase.firestore().collection('users').doc(user.uid).set(db)
+              .then(() => console.log('Imported data synced to cloud'))
+              .catch(err => console.log('Cloud sync error:', err));
+          }
+        }
+        
         updateStatus();
         showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos`);
       };
