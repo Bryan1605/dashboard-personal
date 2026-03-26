@@ -299,14 +299,14 @@ function calculateStreak(history) {
 function updateDashboard() {
   const db = getDB();
 
-  // Calculate totals
-  const totalIncome = db.income.reduce((sum, i) => sum + parseFloat(i.amount), 0);
-  const totalExpenses = db.expenses.reduce((sum, i) => sum + parseFloat(i.amount), 0);
-  const totalDebts = db.debts.reduce((sum, i) => sum + parseFloat(i.amountToPay), 0);
-  const totalSavings = db.savings.reduce((sum, s) => sum + parseFloat(s.currentAmount), 0);
-  const totalSavingsTarget = db.savings.reduce((sum, s) => sum + parseFloat(s.targetAmount), 0);
-  const totalLoans = db.loans.reduce((sum, l) => sum + parseFloat(l.amount), 0);
-  const totalLoansReturned = db.loans.filter(l => l.returned).reduce((sum, l) => sum + parseFloat(l.amount), 0);
+  // Calculate totals (with fallback for old data)
+  const totalIncome = (db.income || []).reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+  const totalExpenses = (db.expenses || []).reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+  const totalDebts = (db.debts || []).reduce((sum, i) => sum + parseFloat(i.amountToPay || 0), 0);
+  const totalSavings = (db.savings || []).reduce((sum, s) => sum + parseFloat(s.currentAmount || 0), 0);
+  const totalSavingsTarget = (db.savings || []).reduce((sum, s) => sum + parseFloat(s.targetAmount || 0), 0);
+  const totalLoans = (db.loans || []).reduce((sum, l) => sum + parseFloat(l.amount || 0), 0);
+  const totalLoansReturned = (db.loans || []).filter(l => l.returned).reduce((sum, l) => sum + parseFloat(l.amount || 0), 0);
 
   // Update KPIs with selected currency
   const el = (id) => document.getElementById(id);
@@ -462,13 +462,14 @@ function renderTransactionLists() {
   // Savings list
   const savingsList = document.getElementById('savings-list');
   if (savingsList) {
-    savingsList.innerHTML = db.savings.slice(-5).reverse().map(s => {
-      const progress = s.targetAmount > 0 ? Math.round((s.currentAmount / s.targetAmount) * 100) : 0;
+    const savings = db.savings || [];
+    savingsList.innerHTML = savings.slice(-5).reverse().map(s => {
+      const progress = (s.targetAmount || 0) > 0 ? Math.round(((s.currentAmount || 0) / s.targetAmount) * 100) : 0;
       return `
         <div class="flex items-center justify-between gap-sm transaction-item">
           <div>
             <div>${s.goal}</div>
-            <div style="font-size: 0.75rem; color: var(--text-secondary);">${progress}% - ${formatCurrency(s.currentAmount)} / ${formatCurrency(s.targetAmount)}</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">${progress}% - ${formatCurrency(s.currentAmount || 0)} / ${formatCurrency(s.targetAmount || 0)}</div>
           </div>
           <button class="btn-delete" onclick="deleteSaving(${s.id})" title="Eliminar">x</button>
         </div>
@@ -479,13 +480,14 @@ function renderTransactionLists() {
   // Loans list
   const loansList = document.getElementById('loans-list');
   if (loansList) {
-    loansList.innerHTML = db.loans.slice(-5).reverse().map(l => `
+    const loans = db.loans || [];
+    loansList.innerHTML = loans.slice(-5).reverse().map(l => `
       <div class="flex items-center justify-between gap-sm transaction-item">
         <div>
           <div>${l.borrower}</div>
           <div style="font-size: 0.75rem; color: var(--text-secondary);">${l.returned ? '✓ Devuelto' : 'Pendiente'}</div>
         </div>
-        <span style="color: var(--secondary);">${formatCurrency(l.amount)}</span>
+        <span style="color: var(--info);">${formatCurrency(l.amount)}</span>
         <button class="btn-delete" onclick="toggleLoanReturned(${l.id})" title="${l.returned ? 'Marcar pendiente' : 'Marcar devuelto'}">✓</button>
         <button class="btn-delete" onclick="deleteLoan(${l.id})" title="Eliminar">x</button>
       </div>

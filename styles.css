@@ -31,6 +31,8 @@ body {
   --primary: #3B82F6;
   --primary-dark: #2563EB;
   --secondary: #10B981;
+  --success: #10B981;
+  --info: #3B82F6;
   --danger: #EF4444;
   --warning: #F59E0B;
   --purple: #8B5CF6;
@@ -275,9 +277,15 @@ h3 {
 /* 8. KPI Cards */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--space-sm);
   margin-bottom: var(--space-lg);
+}
+
+@media (min-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .kpi-card {
@@ -291,6 +299,8 @@ h3 {
 .kpi-card.income { border-left: 4px solid var(--secondary); }
 .kpi-card.expense { border-left: 4px solid var(--danger); }
 .kpi-card.debt { border-left: 4px solid var(--warning); }
+.kpi-card.savings { border-left: 4px solid var(--success); }
+.kpi-card.loans { border-left: 4px solid var(--info); }
 
 .kpi-label {
   font-size: 0.75rem;
@@ -309,6 +319,8 @@ h3 {
 .kpi-card.income .kpi-value { color: var(--secondary); }
 .kpi-card.expense .kpi-value { color: var(--danger); }
 .kpi-card.debt .kpi-value { color: var(--warning); }
+.kpi-card.savings .kpi-value { color: var(--success); }
+.kpi-card.loans .kpi-value { color: var(--info); }
 
 /* 9. CSS Bar Chart */
 .bar-chart {
