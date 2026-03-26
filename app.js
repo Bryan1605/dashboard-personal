@@ -127,6 +127,7 @@ function migrateData() {
   let needsSave = false;
 
   // Migrate habits structure
+  if (!db.habits) db.habits = [];
   db.habits = db.habits.map(habit => {
     if (habit.category === undefined) {
       needsSave = true;
@@ -143,13 +144,42 @@ function migrateData() {
     return habit;
   });
 
+  // Ensure savings and loans arrays exist
+  if (!db.savings) {
+    needsSave = true;
+    db.savings = [];
+  }
+  if (!db.loans) {
+    needsSave = true;
+    db.loans = [];
+  }
+  if (!db.income) {
+    needsSave = true;
+    db.income = [];
+  }
+  if (!db.expenses) {
+    needsSave = true;
+    db.expenses = [];
+  }
+  if (!db.debts) {
+    needsSave = true;
+    db.debts = [];
+  }
+
   // Ensure categories exist
   if (!db.categories) {
     needsSave = true;
     db.categories = {
       expenses: ['General', 'Comida', 'Transporte', 'Ocio', 'Salud'],
+      savings: ['Emergencia', 'Vacaciones', 'Inversion', 'Compra Grande', 'Otro'],
       habits: ['Salud', 'Finanzas', 'Personal', 'Trabajo']
     };
+  }
+  
+  // Ensure savings categories exist
+  if (!db.categories.savings) {
+    needsSave = true;
+    db.categories.savings = ['Emergencia', 'Vacaciones', 'Inversion', 'Compra Grande', 'Otro'];
   }
 
   if (needsSave) saveDB(db);
