@@ -348,6 +348,20 @@
             </div>
           </div>
           <div class="status-item">
+            <span class="status-icon">💰</span>
+            <div class="status-info">
+              <div class="status-label">Ahorros</div>
+              <div class="status-value" id="statusSavings">0</div>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-icon">🤝</span>
+            <div class="status-info">
+              <div class="status-label">Préstamos</div>
+              <div class="status-value" id="statusLoans">0</div>
+            </div>
+          </div>
+          <div class="status-item">
             <span class="status-icon">🎯</span>
             <div class="status-info">
               <div class="status-label">Hábitos</div>
@@ -480,10 +494,12 @@
     }
     
     function updateStatus() {
-      const db = JSON.parse(localStorage.getItem(DB_NAME) || '{"income":[],"expenses":[],"debts":[],"habits":[]}');
+      const db = JSON.parse(localStorage.getItem(DB_NAME) || '{"income":[],"expenses":[],"debts":[],"savings":[],"loans":[],"habits":[]}');
       document.getElementById('statusIncome').textContent = db.income?.length || 0;
       document.getElementById('statusExpenses').textContent = db.expenses?.length || 0;
       document.getElementById('statusDebts').textContent = db.debts?.length || 0;
+      document.getElementById('statusSavings').textContent = db.savings?.length || 0;
+      document.getElementById('statusLoans').textContent = db.loans?.length || 0;
       document.getElementById('statusHabits').textContent = db.habits?.length || 0;
     }
     
@@ -530,15 +546,18 @@
           income: [],
           expenses: [],
           debts: [],
+          savings: [],
+          loans: [],
           habits: [],
           categories: {
             expenses: ['General', 'Comida', 'Transporte', 'Ocio', 'Salud'],
+            savings: ['Emergencia', 'Vacaciones', 'Inversion', 'Compra Grande', 'Otro'],
             habits: ['Salud', 'Finanzas', 'Personal', 'Trabajo']
           }
         };
         
         let currentSection = '';
-        let importedData = { income: 0, expenses: 0, debts: 0, habits: 0 };
+        let importedData = { income: 0, expenses: 0, debts: 0, savings: 0, loans: 0, habits: 0 };
         
         lines.forEach((line, index) => {
           line = line.trim();
@@ -569,6 +588,16 @@
           if (line.includes('Nombre') && line.includes('Frecuencia')) { 
             currentSection = 'habit'; 
             console.log('Detected habit section');
+            return; 
+          }
+          if (line.includes('Meta') && line.includes('Monto')) { 
+            currentSection = 'saving'; 
+            console.log('Detected saving section');
+            return; 
+          }
+          if (line.includes('Prestatario')) { 
+            currentSection = 'loan'; 
+            console.log('Detected loan section');
             return; 
           }
           
@@ -621,6 +650,29 @@
             });
             importedData.habits++;
           }
+          
+          if (currentSection === 'saving' && parts.length >= 2) {
+            db.savings.push({
+              id: Date.now() + Math.random(),
+              goal: parts[0] || '',
+              targetAmount: parseFloat(parts[1]) || 0,
+              currentAmount: parseFloat(parts[2]) || 0,
+              date: parts[3] || ''
+            });
+            importedData.savings++;
+          }
+          
+          if (currentSection === 'loan' && parts.length >= 2) {
+            db.loans.push({
+              id: Date.now() + Math.random(),
+              borrower: parts[0] || '',
+              amount: parseFloat(parts[1]) || 0,
+              date: parts[2] || '',
+              dueDate: parts[3] || '',
+              returned: false
+            });
+            importedData.loans++;
+          }
         });
         
         console.log('Imported data:', importedData);
@@ -635,18 +687,18 @@
           db.collection('users').doc(user.uid).set(db)
             .then(() => {
               console.log('Synced to cloud');
-              showResult('Importacion Exitosa', `Se importaron y sincronizaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos\n\nTus datos ahora estan en la nube.`);
+              showResult('Importacion Exitosa', `Se importaron y sincronizaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.savings} ahorros\n• ${importedData.loans} prestamos\n• ${importedData.habits} habitos\n\nTus datos ahora estan en la nube.`);
             })
             .catch(err => {
               console.error('Cloud sync error:', err);
-              showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos\n\nNota: Sincronizacion con la nube fallida.`);
+              showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.savings} ahorros\n• ${importedData.loans} prestamos\n• ${importedData.habits} habitos\n\nNota: Sincronizacion con la nube fallida.`);
             });
           return; // Exit early since we show result in the promise
         }
         
         updateStatus();
         if (!getCurrentUser()) {
-          showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.habits} habitos`);
+          showResult('Importacion Exitosa', `Se importaron:\n• ${importedData.income} ingresos\n• ${importedData.expenses} gastos\n• ${importedData.debts} deudas\n• ${importedData.savings} ahorros\n• ${importedData.loans} prestamos\n• ${importedData.habits} habitos`);
         }
       };
       
@@ -671,6 +723,12 @@
         csv += '\n--- DEUDAS ---\nAcreedor,Monto Total,Monto a Pagar,Fecha\n';
         (db.debts || []).forEach(d => csv += `${d.creditor},${d.totalAmount},${d.amountToPay},${d.dueDate}\n`);
         
+        csv += '\n--- AHORROS ---\nMeta,Monto Meta,Monto Actual,Fecha\n';
+        (db.savings || []).forEach(s => csv += `${s.goal},${s.targetAmount},${s.currentAmount},${s.date}\n`);
+        
+        csv += '\n--- PRESTAMOS ---\nPrestatario,Monto,Fecha,Fecha Limite\n';
+        (db.loans || []).forEach(l => csv += `${l.borrower},${l.amount},${l.date},${l.dueDate || ''}\n`);
+        
         csv += '\n--- HABITOS ---\nNombre,Frecuencia,Notas,Completado\n';
         (db.habits || []).forEach(h => csv += `${h.name},${h.frequency},"${h.notes || ''}",${h.completed ? 'Si' : 'No'}\n`);
         
@@ -682,7 +740,7 @@
         a.click();
         URL.revokeObjectURL(url);
         
-        showResult('Exportacion Completa', `CSV generado con ${(db.income || []).length + (db.expenses || []).length + (db.debts || []).length + (db.habits || []).length} registros`);
+        showResult('Exportacion Completa', `CSV generado con ${(db.income || []).length + (db.expenses || []).length + (db.debts || []).length + (db.savings || []).length + (db.loans || []).length + (db.habits || []).length} registros`);
       } catch (e) {
         alert('Error al exportar: ' + e.message);
       }

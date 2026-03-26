@@ -94,6 +94,15 @@
         <div class="kpi-label">Deudas</div>
         <div class="kpi-value" id="total-debts">$0.00</div>
       </div>
+      <div class="kpi-card" style="background: var(--success);">
+        <div class="kpi-label">Ahorros</div>
+        <div class="kpi-value" id="total-savings">$0.00</div>
+        <div style="font-size: 0.75rem; opacity: 0.8;">Meta: <span id="total-savings-target">$0.00</span></div>
+      </div>
+      <div class="kpi-card" style="background: var(--info);">
+        <div class="kpi-label">Prestados</div>
+        <div class="kpi-value" id="total-loans">$0.00</div>
+      </div>
     </div>
 
     <!-- Charts -->
@@ -189,6 +198,58 @@
           <button type="submit" class="btn btn-danger" style="width: 100%;">+ Añadir Deuda</button>
         </form>
 
+        <!-- Savings Form -->
+        <div class="section-header mt-md">
+          <h3>Ahorro</h3>
+        </div>
+        <form id="saving-form">
+          <div class="form-group">
+            <label for="saving-goal">Meta de Ahorro</label>
+            <input type="text" id="saving-goal" class="input" placeholder="Ej: Vacaciones, Emergencia" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="saving-target-amount">Monto Meta</label>
+              <input type="number" id="saving-target-amount" class="input" placeholder="0.00" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label for="saving-current-amount">Monto Actual</label>
+              <input type="number" id="saving-current-amount" class="input" placeholder="0.00" step="0.01">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="saving-date">Fecha Inicio</label>
+            <input type="date" id="saving-date" class="input">
+          </div>
+          <button type="submit" class="btn" style="width: 100%; background: var(--success);">+ Añadir Ahorro</button>
+        </form>
+
+        <!-- Loan Form -->
+        <div class="section-header mt-md">
+          <h3>Préstamo Dado</h3>
+        </div>
+        <form id="loan-form">
+          <div class="form-group">
+            <label for="loan-borrower">A Quien</label>
+            <input type="text" id="loan-borrower" class="input" placeholder="Nombre de la persona" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="loan-amount">Monto</label>
+              <input type="number" id="loan-amount" class="input" placeholder="0.00" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label for="loan-date">Fecha</label>
+              <input type="date" id="loan-date" class="input" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="loan-due-date">Fecha Límite (opcional)</label>
+            <input type="date" id="loan-due-date" class="input">
+          </div>
+          <button type="submit" class="btn" style="width: 100%; background: var(--info);">+ Añadir Préstamo</button>
+        </form>
+
         <!-- Category Management -->
         <div class="section-header mt-md">
           <h3>Categorías de Gastos</h3>
@@ -221,6 +282,12 @@
 
         <h3 class="text-secondary">Deudas</h3>
         <div id="debt-list" class="mb-md transaction-list"></div>
+
+        <h3 class="text-secondary">Ahorros</h3>
+        <div id="savings-list" class="mb-md transaction-list"></div>
+
+        <h3 class="text-secondary">Préstamos Dados</h3>
+        <div id="loans-list" class="mb-md transaction-list"></div>
 
         <hr style="border: none; border-top: 1px solid var(--border); margin: var(--space-lg) 0;">
 
@@ -305,6 +372,8 @@
       document.getElementById('income-date').value = today;
       document.getElementById('expense-date').value = today;
       document.getElementById('debt-due-date').value = today;
+      document.getElementById('saving-date').value = today;
+      document.getElementById('loan-date').value = today;
       
       if (typeof auth !== 'undefined') {
         auth.onAuthStateChanged(async user => {

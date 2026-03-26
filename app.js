@@ -47,9 +47,12 @@ function getDB() {
     income: [],
     expenses: [],
     debts: [],
+    savings: [],
+    loans: [],
     habits: [],
     categories: {
       expenses: ['General', 'Comida', 'Transporte', 'Ocio', 'Salud'],
+      savings: ['Emergencia', 'Vacaciones', 'Inversion', 'Compra Grande', 'Otro'],
       habits: ['Salud', 'Finanzas', 'Personal', 'Trabajo']
     }
   };
@@ -210,6 +213,7 @@ function populateCategorySelects() {
   const db = getDB();
   const selects = {
     'expense-category': db.categories.expenses,
+    'saving-category': db.categories.savings,
     'habit-category': db.categories.habits,
     'edit-habit-category': db.categories.habits
   };
@@ -299,12 +303,19 @@ function updateDashboard() {
   const totalIncome = db.income.reduce((sum, i) => sum + parseFloat(i.amount), 0);
   const totalExpenses = db.expenses.reduce((sum, i) => sum + parseFloat(i.amount), 0);
   const totalDebts = db.debts.reduce((sum, i) => sum + parseFloat(i.amountToPay), 0);
+  const totalSavings = db.savings.reduce((sum, s) => sum + parseFloat(s.currentAmount), 0);
+  const totalSavingsTarget = db.savings.reduce((sum, s) => sum + parseFloat(s.targetAmount), 0);
+  const totalLoans = db.loans.reduce((sum, l) => sum + parseFloat(l.amount), 0);
+  const totalLoansReturned = db.loans.filter(l => l.returned).reduce((sum, l) => sum + parseFloat(l.amount), 0);
 
   // Update KPIs with selected currency
   const el = (id) => document.getElementById(id);
   if (el('total-income')) el('total-income').textContent = formatCurrency(totalIncome);
   if (el('total-expenses')) el('total-expenses').textContent = formatCurrency(totalExpenses);
   if (el('total-debts')) el('total-debts').textContent = formatCurrency(totalDebts);
+  if (el('total-savings')) el('total-savings').textContent = formatCurrency(totalSavings);
+  if (el('total-savings-target')) el('total-savings-target').textContent = formatCurrency(totalSavingsTarget);
+  if (el('total-loans')) el('total-loans').textContent = formatCurrency(totalLoans - totalLoansReturned);
 
   // Update charts
   updateBarChart(totalIncome, totalExpenses);
@@ -446,6 +457,39 @@ function renderTransactionLists() {
         <button class="btn-delete" onclick="deleteDebt(${d.id})" title="Eliminar">x</button>
       </div>
     `).join('') || '<p class="text-secondary">Sin deudas registradas</p>';
+  }
+
+  // Savings list
+  const savingsList = document.getElementById('savings-list');
+  if (savingsList) {
+    savingsList.innerHTML = db.savings.slice(-5).reverse().map(s => {
+      const progress = s.targetAmount > 0 ? Math.round((s.currentAmount / s.targetAmount) * 100) : 0;
+      return `
+        <div class="flex items-center justify-between gap-sm transaction-item">
+          <div>
+            <div>${s.goal}</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">${progress}% - ${formatCurrency(s.currentAmount)} / ${formatCurrency(s.targetAmount)}</div>
+          </div>
+          <button class="btn-delete" onclick="deleteSaving(${s.id})" title="Eliminar">x</button>
+        </div>
+      `;
+    }).join('') || '<p class="text-secondary">Sin ahorros registrados</p>';
+  }
+
+  // Loans list
+  const loansList = document.getElementById('loans-list');
+  if (loansList) {
+    loansList.innerHTML = db.loans.slice(-5).reverse().map(l => `
+      <div class="flex items-center justify-between gap-sm transaction-item">
+        <div>
+          <div>${l.borrower}</div>
+          <div style="font-size: 0.75rem; color: var(--text-secondary);">${l.returned ? '✓ Devuelto' : 'Pendiente'}</div>
+        </div>
+        <span style="color: var(--secondary);">${formatCurrency(l.amount)}</span>
+        <button class="btn-delete" onclick="toggleLoanReturned(${l.id})" title="${l.returned ? 'Marcar pendiente' : 'Marcar devuelto'}">✓</button>
+        <button class="btn-delete" onclick="deleteLoan(${l.id})" title="Eliminar">x</button>
+      </div>
+    `).join('') || '<p class="text-secondary">Sin prestamos registrados</p>';
   }
 }
 
@@ -702,6 +746,70 @@ function addDebt() {
   document.getElementById('debt-form').reset();
 }
 
+function addSaving() {
+  const db = getDB();
+  const goal = document.getElementById('saving-goal').value;
+  const targetAmount = document.getElementById('saving-target-amount').value;
+  const currentAmount = document.getElementById('saving-current-amount').value;
+  const date = document.getElementById('saving-date').value;
+  
+  if (!goal || !targetAmount) return alert('Completa los campos requeridos');
+  
+  db.savings.push({
+    id: Date.now(),
+    goal,
+    targetAmount: parseFloat(targetAmount),
+    currentAmount: parseFloat(currentAmount) || 0,
+    date: date || new Date().toISOString().split('T')[0]
+  });
+  saveDB(db);
+  document.getElementById('saving-form').reset();
+}
+
+function addLoan() {
+  const db = getDB();
+  const borrower = document.getElementById('loan-borrower').value;
+  const amount = document.getElementById('loan-amount').value;
+  const date = document.getElementById('loan-date').value;
+  const dueDate = document.getElementById('loan-due-date').value;
+  
+  if (!borrower || !amount || !date) return alert('Completa los campos requeridos');
+  
+  db.loans.push({
+    id: Date.now(),
+    borrower,
+    amount: parseFloat(amount),
+    date,
+    dueDate: dueDate || '',
+    returned: false
+  });
+  saveDB(db);
+  document.getElementById('loan-form').reset();
+}
+
+function deleteSaving(id) {
+  if (!confirm('Eliminar este ahorro?')) return;
+  const db = getDB();
+  db.savings = db.savings.filter(s => s.id !== id);
+  saveDB(db);
+}
+
+function deleteLoan(id) {
+  if (!confirm('Eliminar este prestamo?')) return;
+  const db = getDB();
+  db.loans = db.loans.filter(l => l.id !== id);
+  saveDB(db);
+}
+
+function toggleLoanReturned(id) {
+  const db = getDB();
+  const loan = db.loans.find(l => l.id === id);
+  if (loan) {
+    loan.returned = !loan.returned;
+    saveDB(db);
+  }
+}
+
 // ==========================================
 // INITIALIZATION
 // ==========================================
@@ -730,6 +838,20 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       addDebt();
     });
+    
+    if (document.getElementById('saving-form')) {
+      document.getElementById('saving-form').addEventListener('submit', e => {
+        e.preventDefault();
+        addSaving();
+      });
+    }
+    
+    if (document.getElementById('loan-form')) {
+      document.getElementById('loan-form').addEventListener('submit', e => {
+        e.preventDefault();
+        addLoan();
+      });
+    }
   }
 
   // Habits page
