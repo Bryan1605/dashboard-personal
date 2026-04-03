@@ -324,6 +324,11 @@
   <script src="firebase-config.js"></script>
   <script src="app.js"></script>
   <script>
+    // Debug: ensure app.js loaded
+    console.log('DB_NAME available:', typeof DB_NAME !== 'undefined');
+    console.log('getDB available:', typeof getDB !== 'undefined');
+    console.log('formatCurrency available:', typeof formatCurrency !== 'undefined');
+    
     let userEmail = '';
     
     function updateClock() {
@@ -359,7 +364,12 @@
     }
     
     function loadStats() {
+      console.log('Loading stats...');
+      console.log('DB_NAME:', DB_NAME);
+      console.log('localStorage:', localStorage.getItem(DB_NAME));
+      
       const db = getDB();
+      console.log('DB parsed:', db);
       
       const totalIncome = (db.income || []).reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
       const totalExpenses = (db.expenses || []).reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
@@ -369,6 +379,8 @@
       const habits = (db.habits || []).filter(h => !h.archived);
       const today = new Date().toISOString().split('T')[0];
       const completedToday = habits.filter(h => h.history && h.history.includes(today)).length;
+      
+      console.log('Stats:', { totalIncome, totalExpenses, totalDebts, totalSavings, totalLoansPending, habitsCount: habits.length });
       
       document.getElementById('statIncome').textContent = formatCurrency(totalIncome);
       document.getElementById('statExpenses').textContent = formatCurrency(totalExpenses);
@@ -423,6 +435,8 @@
       initTheme();
       updateClock();
       setInterval(updateClock, 1000);
+      updateGreeting();
+      loadStats();
       
       // Check Firebase auth state
       if (typeof auth !== 'undefined') {
@@ -434,18 +448,16 @@
             document.getElementById('logout-link').style.display = 'flex';
             updateGreeting();
             await syncFromCloud();
+            loadStats();
           } else {
             userEmail = '';
             document.getElementById('user-email').textContent = 'No conectado';
             document.getElementById('login-link').style.display = 'flex';
             document.getElementById('logout-link').style.display = 'none';
             updateGreeting();
+            loadStats();
           }
-          loadStats();
         });
-      } else {
-        updateGreeting();
-        loadStats();
       }
     });
     
