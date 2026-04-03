@@ -257,6 +257,15 @@
       <button class="refresh-btn" id="refresh-btn">
         Actualizar tasa BCV
       </button>
+      
+      <!-- Manual EUR rate input -->
+      <div class="currency-selector" style="margin-top: 16px;">
+        <label style="font-size: 0.75rem; color: var(--text-secondary);">Tasa EUR manual (opcional)</label>
+        <div class="converter-input-row">
+          <input type="number" id="eur-manual-rate" class="input" placeholder="550.89">
+          <button class="btn btn-secondary" style="min-width: auto; padding: 8px 12px;" onclick="setManualEUR()">OK</button>
+        </div>
+      </div>
     </div>
   </div>
   
@@ -322,12 +331,18 @@
     
     (function() {
       const API_URLS = [
-        'https://bcv-api.rafnixg.dev/rates/',
         'https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv',
+        'https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=central-bank',
         'https://api.datyapi.com/dollar'
       ];
       const STORAGE_KEY_USD = 'bcvRateUSD';
       const STORAGE_KEY_EUR = 'bcvRateEUR';
+      
+      // Current official rates (fallback if API fails)
+      const OFFICIAL_RATES = {
+        USD: 36.18,
+        EUR: 38.50  // Approximate, BCV doesn't always publish EUR
+      };
       
       let rates = { USD: 0, EUR: 0 };
       let currentCurrency = 'USD';
@@ -419,11 +434,18 @@
         if (currentCurrency === 'EUR' && rates.EUR <= 0) {
           rateBadge.className = 'rate-badge loading';
           rateValue.textContent = 'Obteniendo tasa EUR...';
-          fetchRates(); // This will try to get EUR from APIs
+          fetchEURRate().then(eurFetched => {
+            if (!eurFetched) {
+              // Try all APIs again
+              fetchRates();
+            }
+            updateRateDisplay();
+            convertBStoCurrency();
+          });
+        } else {
+          updateRateDisplay();
+          convertBStoCurrency();
         }
-        
-        updateRateDisplay();
-        convertBStoCurrency();
       }
       
       function getLastSavedRate() {
@@ -470,7 +492,7 @@
               data = JSON.parse(text);
             }
             
-            console.log('API Response:', data); // Debug log
+            console.log('API Response:', data);
             
             let dollar = null;
             let euro = null;
@@ -482,29 +504,84 @@
             else if (data.price) dollar = parseFloat(data.price);
             else if (data.results && data.results.usd) dollar = parseFloat(data.results.usd.price);
             else if (data.data && data.data.usd) dollar = parseFloat(data.data.usd);
+            else if (data.bcv) dollar = parseFloat(data.bcv);
             
-            // Try to find EUR rate - multiple possible paths
+            // Try to find EUR rate - check multiple sources
             if (data.euro) euro = parseFloat(data.euro);
             else if (data.eur) euro = parseFloat(data.eur);
             else if (data.monitors && data.monitors.eur) euro = parseFloat(data.monitors.eur.price);
             else if (data.results && data.results.eur) euro = parseFloat(data.results.eur.price);
             else if (data.data && data.data.eur) euro = parseFloat(data.data.eur);
             
-            console.log('Parsed rates - USD:', dollar, 'EUR:', euro); // Debug log
+            console.log('Parsed rates - USD:', dollar, 'EUR:', euro);
             
             if (dollar && dollar > 0) {
               setRate('USD', dollar);
-              // Always try to set EUR, even if API doesn't return it, calculate from USD
+              // If EUR provided, use it; otherwise use official or estimate
               if (euro && euro > 0) {
                 setRate('EUR', euro);
               } else {
-                // If no EUR from API, estimate from USD (approximate 0.92 EUR per USD)
-                setRate('EUR', dollar * 0.92);
+                // Use stored EUR rate or fallback
+                const savedEUR = localStorage.getItem(STORAGE_KEY_EUR);
+                if (savedEUR) {
+                  setRate('EUR', parseFloat(savedEUR));
+                } else {
+                  // Don't auto-calculate - just set USD and show EUR unavailable
+                  console.log('EUR rate not available from API');
+                }
               }
               return true;
             }
           } catch (e) {
             console.log('Failed:', type, e.message);
+            continue;
+          }
+        }
+        return false;
+      }
+      
+      // Fetch EUR specifically from a different endpoint
+      async function fetchEURRate() {
+        const eurAPIs = [
+          'https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=enparalelovzla',
+          'https://api.datyapi.com/dollar'
+        ];
+        
+        for (const apiUrl of eurAPIs) {
+          try {
+            const proxies = [
+              { url: 'https://api.allorigins.win/get?url=', type: 'proxy' },
+              { url: 'https://corsproxy.io/?', type: 'proxy' }
+            ];
+            
+            for (const { url: proxy, type } of proxies) {
+              try {
+                const fullUrl = proxy + encodeURIComponent(apiUrl);
+                const response = await Promise.race([
+                  fetch(fullUrl),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                ]);
+                
+                if (!response.ok) continue;
+                const json = await response.json();
+                const data = JSON.parse(json.contents);
+                
+                // Try different paths for EUR
+                let euro = null;
+                if (data.euro) euro = parseFloat(data.euro);
+                else if (data.eur) euro = parseFloat(data.eur);
+                else if (data.monitors && data.monitors.eur) euro = parseFloat(data.monitors.eur.price);
+                else if (data.results && data.results.eur) euro = parseFloat(data.results.eur.price);
+                
+                if (euro && euro > 0) {
+                  setRate('EUR', euro);
+                  return true;
+                }
+              } catch (e) {
+                continue;
+              }
+            }
+          } catch (e) {
             continue;
           }
         }
@@ -539,17 +616,39 @@
         setInterval(updateClock, 1000);
         getLastSavedRate();
         
+        // Expose rates object globally for manual EUR function
+        window.ratesObj = rates;
+        
         // Set initial currency labels
         currentCurrency = currencySelect.value;
         const currencyLabel = currentCurrency === 'USD' ? 'Dolares (USD)' : 'Euros (EUR)';
         document.querySelector('.converter-input-group:nth-of-type(2) label').textContent = currencyLabel;
         convertBtn.textContent = 'Convertir a ' + currentCurrency;
         
-        fetchRates();
+        fetchRates().then(() => {
+          // After fetching rates, also try to fetch EUR specifically
+          fetchEURRate();
+        });
       }
       
       init();
     })();
+    
+    // Function to manually set EUR rate
+    window.setManualEUR = function() {
+      const manualRate = parseFloat(document.getElementById('eur-manual-rate').value);
+      if (manualRate && manualRate > 0) {
+        localStorage.setItem('bcvRateEUR', manualRate.toString());
+        // Update the rates object
+        if (window.ratesObj) {
+          window.ratesObj.EUR = manualRate;
+        }
+        // Refresh conversion
+        const event = new Event('change');
+        document.getElementById('currency-select').dispatchEvent(event);
+        alert('Tasa EUR actualizada: ' + manualRate + ' BS');
+      }
+    };
   </script>
   
   <!-- User Menu Dropdown -->
