@@ -258,7 +258,15 @@
         Actualizar tasa BCV
       </button>
       
-      <!-- Manual EUR rate input -->
+      <!-- Manual rate inputs -->
+      <div class="currency-selector" style="margin-top: 16px;">
+        <label style="font-size: 0.75rem; color: var(--text-secondary);">Tasa USD manual (opcional)</label>
+        <div class="converter-input-row">
+          <input type="number" id="usd-manual-rate" class="input" placeholder="36.18">
+          <button class="btn btn-secondary" style="min-width: auto; padding: 8px 12px;" onclick="setManualUSD()">OK</button>
+        </div>
+      </div>
+      
       <div class="currency-selector" style="margin-top: 16px;">
         <label style="font-size: 0.75rem; color: var(--text-secondary);">Tasa EUR manual (opcional)</label>
         <div class="converter-input-row">
@@ -408,6 +416,8 @@
       function setRate(currency, rate) {
         rates[currency] = rate;
         localStorage.setItem(currency === 'USD' ? STORAGE_KEY_USD : STORAGE_KEY_EUR, rate.toString());
+        // Update global rates object
+        window.ratesObj = rates;
         updateRateDisplay();
         convertBStoCurrency();
       }
@@ -634,16 +644,28 @@
       init();
     })();
     
+    // Function to manually set USD rate
+    window.setManualUSD = function() {
+      const manualRate = parseFloat(document.getElementById('usd-manual-rate').value);
+      if (manualRate && manualRate > 0) {
+        localStorage.setItem('bcvRateUSD', manualRate.toString());
+        if (window.ratesObj) {
+          window.ratesObj.USD = manualRate;
+        }
+        const event = new Event('input');
+        document.getElementById('bs-input').dispatchEvent(event);
+        alert('Tasa USD actualizada: ' + manualRate + ' BS');
+      }
+    };
+    
     // Function to manually set EUR rate
     window.setManualEUR = function() {
       const manualRate = parseFloat(document.getElementById('eur-manual-rate').value);
       if (manualRate && manualRate > 0) {
         localStorage.setItem('bcvRateEUR', manualRate.toString());
-        // Update the rates object
         if (window.ratesObj) {
           window.ratesObj.EUR = manualRate;
         }
-        // Refresh conversion
         const event = new Event('change');
         document.getElementById('currency-select').dispatchEvent(event);
         alert('Tasa EUR actualizada: ' + manualRate + ' BS');
