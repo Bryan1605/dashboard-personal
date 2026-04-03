@@ -321,8 +321,9 @@
     });
     
     (function() {
-      // Using direct BCV API - no proxy needed
+      // BCV API through proxy
       const BCV_API_URL = 'https://bcv-api.rafnixg.dev/rates/';
+      const PROXY_URL = 'https://api.allorigins.win/raw?url=';
       const STORAGE_KEY_USD = 'bcvRateUSD';
       const STORAGE_KEY_EUR = 'bcvRateEUR';
       
@@ -390,7 +391,6 @@
         rates[currency] = rate;
         localStorage.setItem(currency === 'USD' ? STORAGE_KEY_USD : STORAGE_KEY_EUR, rate.toString());
         window.ratesObj = rates;
-        window.converterRates = rates;
         updateRateDisplay();
         convertBStoCurrency();
       }
@@ -420,19 +420,19 @@
         convertBStoCurrency();
       }
       
-      // Fetch rates from BCV API
+      // Fetch rates from BCV API through proxy
       async function fetchRates() {
         setLoading();
         
         try {
-          // Fetch directly from BCV API
-          const response = await fetch(BCV_API_URL, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-          });
+          // Try through allorigins proxy
+          const proxyUrl = PROXY_URL + encodeURIComponent(BCV_API_URL);
+          console.log('Fetching via proxy:', proxyUrl);
+          
+          const response = await fetch(proxyUrl);
           
           if (!response.ok) {
-            throw new Error('API response not OK');
+            throw new Error('Proxy response not OK');
           }
           
           const data = await response.json();
@@ -442,41 +442,28 @@
           let dollar = null;
           let euro = null;
           
-          // The API returns different formats, handle them all
           if (data.usd) dollar = parseFloat(data.usd);
           else if (data.Dolar) dollar = parseFloat(data.Dolar);
           else if (data.dollar) dollar = parseFloat(data.dollar);
           
           if (data.eur) euro = parseFloat(data.eur);
           else if (data.Euro) euro = parseFloat(data.Euro);
-          else if (data.euro) euro = parseFloat(data.euro);
           
           console.log('Parsed - USD:', dollar, 'EUR:', euro);
           
           if (dollar && dollar > 0) {
             setRate('USD', dollar);
-            // If we got EUR, use it; otherwise keep existing
             if (euro && euro > 0) {
               setRate('EUR', euro);
-            } else if (rates.EUR <= 0) {
-              // Use stored EUR if available
-              const savedEUR = localStorage.getItem(STORAGE_KEY_EUR);
-              if (savedEUR) setRate('EUR', parseFloat(savedEUR));
             }
           } else {
-            // Try to load from localStorage
             loadSavedRates();
-            if (rates.USD <= 0) {
-              setError('Tasa no disponible');
-            }
+            if (rates.USD <= 0) setError('Tasa no disponible');
           }
         } catch (error) {
           console.error('Error fetching BCV rate:', error);
-          // Try saved rates on error
           loadSavedRates();
-          if (rates.USD <= 0) {
-            setError('Error de conexión');
-          }
+          if (rates.USD <= 0) setError('Error de conexión');
         }
       }
       
@@ -486,14 +473,12 @@
         if (savedUSD) {
           rates.USD = parseFloat(savedUSD);
           window.ratesObj = rates;
-          window.converterRates = rates;
           updateRateDisplay();
           convertBStoCurrency();
         }
         if (savedEUR) {
           rates.EUR = parseFloat(savedEUR);
           window.ratesObj = rates;
-          window.converterRates = rates;
         }
       }
       
@@ -509,13 +494,9 @@
         updateClock();
         setInterval(updateClock, 1000);
         
-        // Load saved rates first (offline mode)
         loadSavedRates();
-        
-        // Then try to fetch fresh rates
         fetchRates();
         
-        // Set initial labels
         currentCurrency = currencySelect ? currencySelect.value : 'USD';
         const currencyLabelEl = document.getElementById('currency-input-label');
         if (currencyLabelEl) {
