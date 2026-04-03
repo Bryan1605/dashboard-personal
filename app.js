@@ -5,6 +5,228 @@
 
 const DB_NAME = 'personalDashboardDB';
 
+// ==========================================
+// XP & LEVEL SYSTEM (Study Techniques)
+// ==========================================
+
+const XP_PER_HABIT = 10;
+const LEVEL_MULTIPLIER = 100;
+
+function calculateLevel(xp) {
+  return Math.floor(Math.sqrt(xp / LEVEL_MULTIPLIER)) + 1;
+}
+
+function calculateXPForLevel(level) {
+  return level * level * LEVEL_MULTIPLIER;
+}
+
+function getXPProgress(xp) {
+  const level = calculateLevel(xp);
+  const currentLevelXP = calculateXPForLevel(level);
+  const nextLevelXP = calculateXPForLevel(level + 1);
+  const progress = ((xp - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100;
+  return { level, progress, currentXP: xp, nextXP: nextLevelXP };
+}
+
+// ==========================================
+// ACHIEVEMENTS SYSTEM
+// ==========================================
+
+const ACHIEVEMENTS = [
+  { id: 'streak_7', title: 'Semana Perfecta', icon: '🌟', requirement: 7, type: 'streak' },
+  { id: 'streak_30', title: 'Mes de Hierro', icon: '💪', requirement: 30, type: 'streak' },
+  { id: 'streak_100', title: 'Centuria', icon: '👑', requirement: 100, type: 'streak' },
+  { id: 'habits_10', title: 'Dedicado', icon: '📚', requirement: 10, type: 'total' },
+  { id: 'habits_50', title: 'Maestro', icon: '🏆', requirement: 50, type: 'total' },
+  { id: 'habits_100', title: 'Leyenda', icon: '🌟', requirement: 100, type: 'total' },
+  { id: 'xp_1000', title: 'Aprendiz', icon: '📖', requirement: 1000, type: 'xp' },
+  { id: 'xp_5000', title: 'Estudiante', icon: '🎓', requirement: 5000, type: 'xp' },
+  { id: 'xp_10000', title: 'Experto', icon: '🎯', requirement: 10000, type: 'xp' },
+];
+
+function checkAchievements() {
+  const db = getDB();
+  const userStats = db.userStats || { xp: 0, totalCompleted: 0, unlockedAchievements: [] };
+  
+  const newlyUnlocked = [];
+  
+  ACHIEVEMENTS.forEach(achievement => {
+    if (userStats.unlockedAchievements.includes(achievement.id)) return;
+    
+    let unlocked = false;
+    switch (achievement.type) {
+      case 'streak':
+        const maxStreak = Math.max(...(db.habits || []).map(h => calculateStreak(h.history)), 0);
+        unlocked = maxStreak >= achievement.requirement;
+        break;
+      case 'total':
+        unlocked = userStats.totalCompleted >= achievement.requirement;
+        break;
+      case 'xp':
+        unlocked = userStats.xp >= achievement.requirement;
+        break;
+    }
+    
+    if (unlocked) {
+      userStats.unlockedAchievements.push(achievement.id);
+      newlyUnlocked.push(achievement);
+    }
+  });
+  
+  db.userStats = userStats;
+  saveDB(db);
+  
+  return newlyUnlocked;
+}
+
+// ==========================================
+// FLASHCARDS SYSTEM
+// ==========================================
+
+function addFlashcard(habitId, question, answer) {
+  const db = getDB();
+  if (!db.flashcards) db.flashcards = [];
+  
+  db.flashcards.push({
+    id: Date.now(),
+    habitId,
+    question,
+    answer,
+    createdAt: new Date().toISOString().split('T')[0],
+    timesReviewed: 0,
+    timesCorrect: 0
+  });
+  
+  saveDB(db);
+}
+
+function deleteFlashcard(id) {
+  const db = getDB();
+  if (!db.flashcards) return;
+  db.flashcards = db.flashcards.filter(f => f.id !== id);
+  saveDB(db);
+}
+
+function updateFlashcardProgress(id, correct) {
+  const db = getDB();
+  if (!db.flashcards) return;
+  
+  const card = db.flashcards.find(f => f.id === id);
+  if (card) {
+    card.timesReviewed++;
+    if (correct) card.timesCorrect++;
+    saveDB(db);
+  }
+}
+
+// ==========================================
+// WEEKLY SUMMARY
+// ==========================================
+
+function getWeeklySummary() {
+  const db = getDB();
+  const habits = db.habits || [];
+  const today = new Date();
+  const last7Days = [];
+  
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    last7Days.push(d.toISOString().split('T')[0]);
+  }
+  
+  let totalCompleted = 0;
+  let totalPossible = 0;
+  const byCategory = {};
+  
+  habits.filter(h => !h.archived).forEach(habit => {
+    const category = habit.category || 'General';
+    if (!byCategory[category]) byCategory[category] = { completed: 0, total: 0 };
+    
+    last7Days.forEach(day => {
+      totalPossible++;
+      byCategory[category].total++;
+      if (habit.history && habit.history.includes(day)) {
+        totalCompleted++;
+        byCategory[category].completed++;
+      }
+    });
+  });
+  
+  const completionRate = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+  
+  return {
+    totalCompleted,
+    totalPossible,
+    completionRate,
+    byCategory,
+    days: last7Days
+  };
+}
+
+// ==========================================
+// AUDIO RECORDING (Study Technique)
+// ==========================================
+
+let mediaRecorder = null;
+let audioChunks = [];
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    
+    mediaRecorder.ondataavailable = event => {
+      audioChunks.push(event.data);
+    };
+    
+    mediaRecorder.start();
+    return true;
+  } catch (err) {
+    console.error('Error starting recording:', err);
+    return false;
+  }
+}
+
+function stopRecording() {
+  return new Promise(resolve => {
+    if (!mediaRecorder) {
+      resolve(null);
+      return;
+    }
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result);
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      };
+      reader.readAsDataURL(blob);
+    };
+    
+    mediaRecorder.stop();
+  });
+}
+
+// ==========================================
+// INIT USER STATS
+// ==========================================
+
+function initUserStats() {
+  const db = getDB();
+  if (!db.userStats) {
+    db.userStats = {
+      xp: 0,
+      totalCompleted: 0,
+      longestStreak: 0,
+      unlockedAchievements: []
+    };
+    saveDB(db);
+  }
+}
+
 const CURRENCY_SYMBOLS = {
   USD: '$',
   EUR: '€'
@@ -126,6 +348,17 @@ function migrateData() {
   const db = getDB();
   let needsSave = false;
 
+  // Initialize userStats if not exists
+  if (!db.userStats) {
+    needsSave = true;
+    db.userStats = {
+      xp: 0,
+      totalCompleted: 0,
+      longestStreak: 0,
+      unlockedAchievements: []
+    };
+  }
+
   // Migrate habits structure
   if (!db.habits) db.habits = [];
   db.habits = db.habits.map(habit => {
@@ -135,12 +368,15 @@ function migrateData() {
         ...habit, 
         category: 'General', 
         archived: false, 
-        history: [],
+        history: habit.history || [],
         notes: habit.notes || ''
       };
     }
     if (!habit.archived) habit.archived = false;
-    if (!habit.history) habit.history = [];
+    if (!habit.history) {
+      needsSave = true;
+      habit.history = [];
+    }
     return habit;
   });
 
@@ -359,6 +595,7 @@ function updateDashboard() {
   // Update lists
   renderTransactionLists();
   renderHabitMiniList();
+  renderDashboardXPWidget();
 }
 
 // ==========================================
@@ -571,6 +808,9 @@ function renderHabitChecklist() {
 
   const db = getDB();
   const habits = db.habits.filter(h => !h.archived);
+  const userStats = db.userStats || { xp: 0, totalCompleted: 0, longestStreak: 0, unlockedAchievements: [] };
+  const progress = getXPProgress(userStats.xp);
+  const summary = getWeeklySummary();
 
   if (habits.length === 0) {
     container.innerHTML = `
@@ -591,11 +831,37 @@ function renderHabitChecklist() {
     return { date: d.toISOString().split('T')[0], label: dayNames[d.getDay()] };
   });
 
-  container.innerHTML = habits.map(h => {
+  container.innerHTML = `
+    ${getXPDisplay()}
+    <div class="section-header mt-md">
+      <h3>🏆 Logros (${userStats.unlockedAchievements?.length || 0}/${ACHIEVEMENTS.length})</h3>
+    </div>
+    ${getAchievementsDisplay()}
+    <div class="card mt-md">
+      <h3>📊 Resumen Semanal</h3>
+      <div class="summary-stats-grid">
+        <div class="summary-stat-box">
+          <span class="stat-number">${summary.totalCompleted}</span>
+          <span class="stat-text">Completados</span>
+        </div>
+        <div class="summary-stat-box">
+          <span class="stat-number">${summary.totalPossible - summary.totalCompleted}</span>
+          <span class="stat-text">Pendientes</span>
+        </div>
+        <div class="summary-stat-box highlight">
+          <span class="stat-number">${summary.completionRate}%</span>
+          <span class="stat-text">Tasa</span>
+        </div>
+      </div>
+    </div>
+    <div class="section-header mt-md">
+      <h2>📋 Mis Hábitos</h2>
+    </div>
+  ` + habits.map(h => {
     const streak = calculateStreak(h.history);
     const heatmap = last7.map(d => `
       <div class="heatmap-day">
-        <div class="heatmap-box ${h.history.includes(d.date) ? 'completed' : ''} ${d.date === today ? 'today' : ''}"></div>
+        <div class="heatmap-box ${h.history && h.history.includes(d.date) ? 'completed' : ''} ${d.date === today ? 'today' : ''}"></div>
         <span class="heatmap-day-label">${d.label}</span>
       </div>
     `).join('');
@@ -611,6 +877,7 @@ function renderHabitChecklist() {
               <span class="habit-tag">${h.category}</span>
               <span class="habit-tag">${h.frequency}</span>
               ${streak > 0 ? `<span class="habit-streak">🔥 ${streak} días</span>` : ''}
+              <span class="habit-xp">+${XP_PER_HABIT} XP</span>
             </div>
             ${h.notes ? `<p class="text-secondary" style="font-size: 0.875rem; margin-top: 4px;">${h.notes}</p>` : ''}
             <div class="heatmap">${heatmap}</div>
@@ -619,6 +886,7 @@ function renderHabitChecklist() {
         <div class="habit-actions">
           <button class="btn btn-sm btn-ghost" onclick="openEditModal(${h.id})" title="Editar">✏️</button>
           <button class="btn btn-sm btn-ghost" onclick="resetStreak(${h.id})" title="Reiniciar">🔄</button>
+          <button class="btn btn-sm btn-ghost" onclick="showFlashcards(${h.id})" title="Flashcards">📝</button>
           <button class="btn btn-sm btn-ghost" onclick="archiveHabit(${h.id})" title="Archivar">📦</button>
           <button class="btn btn-sm btn-ghost" onclick="deleteHabit(${h.id})" title="Eliminar" style="color: var(--danger);">🗑️</button>
         </div>
@@ -637,15 +905,34 @@ function toggleHabit(id) {
   if (!habit) return;
 
   const today = new Date().toISOString().split('T')[0];
+  const wasCompleted = habit.completed;
   habit.completed = !habit.completed;
 
   if (habit.completed) {
+    if (!habit.history) habit.history = [];
     if (!habit.history.includes(today)) habit.history.push(today);
+    
+    // Award XP for completing habit
+    if (!db.userStats) db.userStats = { xp: 0, totalCompleted: 0, longestStreak: 0, unlockedAchievements: [] };
+    db.userStats.xp = (db.userStats.xp || 0) + XP_PER_HABIT;
+    db.userStats.totalCompleted = (db.userStats.totalCompleted || 0) + 1;
+    
+    // Update longest streak
+    const currentStreak = calculateStreak(habit.history);
+    if (currentStreak > (db.userStats.longestStreak || 0)) {
+      db.userStats.longestStreak = currentStreak;
+    }
   } else {
     habit.history = habit.history.filter(d => d !== today);
+    // Remove XP if unchecking (optional - can be removed to not penalize)
+    if (db.userStats) {
+      db.userStats.xp = Math.max(0, (db.userStats.xp || 0) - XP_PER_HABIT);
+      db.userStats.totalCompleted = Math.max(0, (db.userStats.totalCompleted || 0) - 1);
+    }
   }
 
   saveDB(db);
+  checkAchievements();
 }
 
 function addHabit(name, frequency, notes, category) {
@@ -843,10 +1130,256 @@ function toggleLoanReturned(id) {
 }
 
 // ==========================================
-// INITIALIZATION
+// FLASHCARDS RENDERING
 // ==========================================
 
+function renderFlashcards(habitId) {
+  const db = getDB();
+  const flashcards = (db.flashcards || []).filter(f => f.habitId === habitId);
+  
+  if (flashcards.length === 0) return '';
+  
+  return flashcards.map(card => `
+    <div class="flashcard-item" onclick="flipFlashcard(${card.id})">
+      <div class="flashcard-front">
+        <span class="flashcard-icon">📝</span>
+        <span>${card.question}</span>
+      </div>
+      <div class="flashcard-back">
+        <span>${card.answer}</span>
+        <div class="flashcard-actions">
+          <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); markFlashcardCorrect(${card.id})">✓</button>
+          <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); deleteFlashcard(${card.id})">🗑️</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function flipFlashcard(id) {
+  const card = document.querySelector(`.flashcard-item[data-id="${id}"]`);
+  if (card) card.classList.toggle('flipped');
+}
+
+function markFlashcardCorrect(id) {
+  updateFlashcardProgress(id, true);
+  const card = document.querySelector(`.flashcard-item[data-id="${id}"]`);
+  if (card) {
+    card.classList.add('correct');
+    setTimeout(() => card.classList.remove('correct'), 500);
+  }
+}
+
+function showFlashcards(habitId) {
+  const db = getDB();
+  const habit = db.habits.find(h => h.id === habitId);
+  if (!habit) return;
+  
+  const modal = document.getElementById('flashcard-modal') || createFlashcardModal();
+  document.getElementById('flashcard-habit-name').textContent = habit.name;
+  document.getElementById('flashcard-habit-id').value = habitId;
+  
+  renderFlashcardList(habitId);
+  modal.classList.remove('modal-hidden');
+  modal.classList.add('active');
+}
+
+function createFlashcardModal() {
+  const modal = document.createElement('div');
+  modal.id = 'flashcard-modal';
+  modal.className = 'modal modal-hidden';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📝 Flashcards: <span id="flashcard-habit-name"></span></h2>
+        <button class="modal-close" onclick="closeFlashcardModal()">✕</button>
+      </div>
+      <div class="flashcard-form">
+        <input type="hidden" id="flashcard-habit-id">
+        <div class="form-group">
+          <input type="text" id="flashcard-question" class="input" placeholder="Pregunta">
+        </div>
+        <div class="form-group">
+          <input type="text" id="flashcard-answer" class="input" placeholder="Respuesta">
+        </div>
+        <button class="btn btn-primary" onclick="addNewFlashcard()">+ Agregar</button>
+      </div>
+      <div id="flashcard-list" class="flashcard-list"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function closeFlashcardModal() {
+  const modal = document.getElementById('flashcard-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.classList.add('modal-hidden');
+  }
+}
+
+function addNewFlashcard() {
+  const habitId = parseInt(document.getElementById('flashcard-habit-id').value);
+  const question = document.getElementById('flashcard-question').value;
+  const answer = document.getElementById('flashcard-answer').value;
+  
+  if (!question || !answer) return alert('Completa pregunta y respuesta');
+  
+  addFlashcard(habitId, question, answer);
+  document.getElementById('flashcard-question').value = '';
+  document.getElementById('flashcard-answer').value = '';
+  renderFlashcardList(habitId);
+}
+
+function renderFlashcardList(habitId) {
+  const container = document.getElementById('flashcard-list');
+  if (!container) return;
+  
+  const db = getDB();
+  const flashcards = (db.flashcards || []).filter(f => f.habitId === habitId);
+  
+  if (flashcards.length === 0) {
+    container.innerHTML = '<p class="text-secondary text-center">No hay flashcards. ¡Agrega una!</p>';
+    return;
+  }
+  
+  container.innerHTML = flashcards.map(card => `
+    <div class="flashcard-item" data-id="${card.id}">
+      <div class="flashcard-front" onclick="toggleFlashcardFlip(${card.id})">
+        <strong>${card.question}</strong>
+      </div>
+      <div class="flashcard-back" style="display: none;">
+        <span>${card.answer}</span>
+      </div>
+      <div class="flashcard-controls">
+        <button class="btn btn-sm btn-ghost" onclick="markFlashcardCorrect(${card.id})">✓</button>
+        <button class="btn btn-sm btn-ghost" onclick="deleteFlashcard(${card.id}); renderFlashcardList(${habitId});">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleFlashcardFlip(id) {
+  const card = document.querySelector(`.flashcard-item[data-id="${id}"]`);
+  if (!card) return;
+  const front = card.querySelector('.flashcard-front');
+  const back = card.querySelector('.flashcard-back');
+  if (front.style.display === 'none') {
+    front.style.display = 'block';
+    back.style.display = 'none';
+  } else {
+    front.style.display = 'none';
+    back.style.display = 'block';
+  }
+}
+
+// ==========================================
+// DASHBOARD XP WIDGET
+// ==========================================
+
+function renderDashboardXPWidget() {
+  const container = document.getElementById('dashboard-xp-widget');
+  if (!container) return;
+  
+  const db = getDB();
+  const userStats = db.userStats || { xp: 0, totalCompleted: 0, longestStreak: 0, unlockedAchievements: [] };
+  const progress = getXPProgress(userStats.xp);
+  
+  container.innerHTML = `
+    <div class="dashboard-xp-card">
+      <div class="dashboard-xp-header">
+        <span class="dashboard-xp-level">⭐ Nivel ${progress.level}</span>
+        <span class="dashboard-xp-total">${userStats.xp} XP</span>
+      </div>
+      <div class="dashboard-xp-bar">
+        <div class="dashboard-xp-fill" style="width: ${Math.min(progress.progress, 100)}%"></div>
+      </div>
+      <div class="dashboard-xp-footer">
+        <span>🔥 Racha: ${userStats.longestStreak || 0} días</span>
+        <span>🏆 ${userStats.unlockedAchievements?.length || 0} logros</span>
+      </div>
+    </div>
+    <hr style="border: none; border-top: 1px solid var(--border); margin: var(--space-lg) 0;">
+  `;
+}
+
+// ==========================================
+// XP DISPLAY
+// ==========================================
+
+function getXPDisplay() {
+  const db = getDB();
+  const userStats = db.userStats || { xp: 0, totalCompleted: 0, longestStreak: 0, unlockedAchievements: [] };
+  const progress = getXPProgress(userStats.xp);
+  
+  return `
+    <div class="xp-card">
+      <div class="xp-header">
+        <span class="xp-level">Nivel ${progress.level}</span>
+        <span class="xp-streak">🔥 ${userStats.longestStreak || 0}</span>
+      </div>
+      <div class="xp-bar">
+        <div class="xp-fill" style="width: ${Math.min(progress.progress, 100)}%"></div>
+      </div>
+      <div class="xp-info">
+        <span>${userStats.xp} XP</span>
+        <span>${progress.nextXP} XP</span>
+      </div>
+    </div>
+  `;
+}
+
+function getAchievementsDisplay() {
+  const db = getDB();
+  const userStats = db.userStats || { unlockedAchievements: [] };
+  const unlocked = userStats.unlockedAchievements || [];
+  
+  return `
+    <div class="achievements-grid">
+      ${ACHIEVEMENTS.map(a => `
+        <div class="achievement-badge ${unlocked.includes(a.id) ? 'unlocked' : ''}" 
+             title="${a.title}: ${a.requirement}${a.type === 'streak' ? ' días' : a.type === 'xp' ? ' XP' : ' completaciones'}">
+          <span class="achievement-icon">${a.icon}</span>
+          <span class="achievement-title">${a.title}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function getWeeklySummaryDisplay() {
+  const summary = getWeeklySummary();
+  
+  return `
+    <div class="weekly-summary">
+      <h3>📊 Resumen Semanal</h3>
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <span class="stat-value">${summary.totalCompleted}</span>
+          <span class="stat-label">Completados</span>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-value">${summary.completionRate}%</span>
+          <span class="stat-label">Tasa</span>
+        </div>
+      </div>
+      <div class="summary-categories">
+        ${Object.entries(summary.byCategory).map(([cat, data]) => `
+          <div class="category-progress">
+            <span class="category-name">${cat}</span>
+            <div class="category-bar">
+              <div class="category-fill" style="width: ${data.total > 0 ? (data.completed / data.total) * 100 : 0}%"></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initUserStats();
   initTheme();
   migrateData();
   populateCategorySelects();

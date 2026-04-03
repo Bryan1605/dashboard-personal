@@ -1018,3 +1018,233 @@ h3 {
     padding-bottom: 70px !important;
   }
 }
+
+/* 26. XP System */
+.xp-card {
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  color: white;
+  margin-bottom: var(--space-md);
+}
+
+.xp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.xp-level {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.xp-streak {
+  background: rgba(255,255,255,0.2);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+}
+
+.xp-bar {
+  height: 12px;
+  background: rgba(255,255,255,0.2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFD700, #FFA500);
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+.xp-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+/* 27. Achievements */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.achievement-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-sm);
+  background: var(--input-bg);
+  border-radius: var(--radius-md);
+  opacity: 0.4;
+  transition: all 0.3s;
+}
+
+.achievement-badge.unlocked {
+  opacity: 1;
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.achievement-icon {
+  font-size: 1.5rem;
+  margin-bottom: 2px;
+}
+
+.achievement-title {
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* 28. Weekly Summary Stats */
+.summary-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  text-align: center;
+}
+
+.summary-stat-box {
+  padding: var(--space-md);
+  background: var(--input-bg);
+  border-radius: var(--radius-md);
+}
+
+.summary-stat-box.highlight {
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  color: white;
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.summary-stat-box.highlight .stat-text {
+  color: rgba(255,255,255,0.8);
+}
+
+/* 29. Flashcards */
+.flashcard-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: var(--space-md);
+}
+
+.flashcard-item {
+  background: var(--input-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.flashcard-item:hover {
+  border-color: var(--primary);
+}
+
+.flashcard-item.correct {
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.flashcard-front {
+  font-weight: 500;
+}
+
+.flashcard-back {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.flashcard-controls {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.flashcard-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+/* 30. Habit XP Tag */
+.habit-xp {
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  color: white;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+/* 31. Dashboard XP Widget */
+.dashboard-xp-card {
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  color: white;
+  margin-bottom: var(--space-md);
+}
+
+.dashboard-xp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.dashboard-xp-level {
+  font-weight: 700;
+}
+
+.dashboard-xp-total {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+.dashboard-xp-bar {
+  height: 8px;
+  background: rgba(255,255,255,0.2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.dashboard-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFD700, #FFA500);
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+.dashboard-xp-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
