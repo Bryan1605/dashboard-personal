@@ -368,6 +368,8 @@
         const symbol = getCurrencySymbol();
         resultEl.textContent = symbol + result.toFixed(2) + ' ' + currentCurrency;
         directionEl.textContent = 'BS → ' + currentCurrency;
+        // Also update the result box label
+        document.querySelector('.result-label').textContent = 'Resultado (' + currentCurrency + ')';
       }
       
       function convertCurrencyToBS() {
@@ -407,6 +409,19 @@
       
       function changeCurrency() {
         currentCurrency = currencySelect.value;
+        
+        // Update labels based on currency
+        const currencyLabel = currentCurrency === 'USD' ? 'Dolares (USD)' : 'Euros (EUR)';
+        document.querySelector('.converter-input-group:nth-of-type(2) label').textContent = currencyLabel;
+        convertBtn.textContent = 'Convertir a ' + currentCurrency;
+        
+        // If EUR rate not loaded, try to fetch it
+        if (currentCurrency === 'EUR' && rates.EUR <= 0) {
+          rateBadge.className = 'rate-badge loading';
+          rateValue.textContent = 'Obteniendo tasa EUR...';
+          fetchRates(); // This will try to get EUR from APIs
+        }
+        
         updateRateDisplay();
         convertBStoCurrency();
       }
@@ -455,20 +470,37 @@
               data = JSON.parse(text);
             }
             
+            console.log('API Response:', data); // Debug log
+            
             let dollar = null;
             let euro = null;
             
+            // Try to find USD rate - multiple possible paths
             if (data.dollar) dollar = parseFloat(data.dollar);
             else if (data.usd) dollar = parseFloat(data.usd);
             else if (data.monitors && data.monitors.usd) dollar = parseFloat(data.monitors.usd.price);
             else if (data.price) dollar = parseFloat(data.price);
+            else if (data.results && data.results.usd) dollar = parseFloat(data.results.usd.price);
+            else if (data.data && data.data.usd) dollar = parseFloat(data.data.usd);
             
+            // Try to find EUR rate - multiple possible paths
             if (data.euro) euro = parseFloat(data.euro);
             else if (data.eur) euro = parseFloat(data.eur);
+            else if (data.monitors && data.monitors.eur) euro = parseFloat(data.monitors.eur.price);
+            else if (data.results && data.results.eur) euro = parseFloat(data.results.eur.price);
+            else if (data.data && data.data.eur) euro = parseFloat(data.data.eur);
+            
+            console.log('Parsed rates - USD:', dollar, 'EUR:', euro); // Debug log
             
             if (dollar && dollar > 0) {
               setRate('USD', dollar);
-              if (euro && euro > 0) setRate('EUR', euro);
+              // Always try to set EUR, even if API doesn't return it, calculate from USD
+              if (euro && euro > 0) {
+                setRate('EUR', euro);
+              } else {
+                // If no EUR from API, estimate from USD (approximate 0.92 EUR per USD)
+                setRate('EUR', dollar * 0.92);
+              }
               return true;
             }
           } catch (e) {
@@ -506,6 +538,13 @@
         updateClock();
         setInterval(updateClock, 1000);
         getLastSavedRate();
+        
+        // Set initial currency labels
+        currentCurrency = currencySelect.value;
+        const currencyLabel = currentCurrency === 'USD' ? 'Dolares (USD)' : 'Euros (EUR)';
+        document.querySelector('.converter-input-group:nth-of-type(2) label').textContent = currencyLabel;
+        convertBtn.textContent = 'Convertir a ' + currentCurrency;
+        
         fetchRates();
       }
       
