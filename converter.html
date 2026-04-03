@@ -243,7 +243,7 @@
       </button>
       
       <div class="converter-input-group">
-        <label>Dolares (USD)</label>
+        <label id="currency-input-label">Dolares (USD)</label>
         <div class="converter-input-row">
           <input type="number" id="usd-input" class="input" placeholder="0.00">
         </div>
@@ -437,8 +437,9 @@
         
         // Update labels based on currency
         const currencyLabel = currentCurrency === 'USD' ? 'Dolares (USD)' : 'Euros (EUR)';
-        document.querySelector('.converter-input-group:nth-of-type(2) label').textContent = currencyLabel;
-        convertBtn.textContent = 'Convertir a ' + currentCurrency;
+        const currencyLabelEl = document.getElementById('currency-input-label');
+        if (currencyLabelEl) currencyLabelEl.textContent = currencyLabel;
+        if (convertBtn) convertBtn.textContent = 'Convertir a ' + currentCurrency;
         
         // If EUR rate not loaded, try to fetch it
         if (currentCurrency === 'EUR' && rates.EUR <= 0) {
@@ -632,8 +633,9 @@
         // Set initial currency labels
         currentCurrency = currencySelect.value;
         const currencyLabel = currentCurrency === 'USD' ? 'Dolares (USD)' : 'Euros (EUR)';
-        document.querySelector('.converter-input-group:nth-of-type(2) label').textContent = currencyLabel;
-        convertBtn.textContent = 'Convertir a ' + currentCurrency;
+        const currencyLabelEl = document.getElementById('currency-input-label');
+        if (currencyLabelEl) currencyLabelEl.textContent = currencyLabel;
+        if (convertBtn) convertBtn.textContent = 'Convertir a ' + currentCurrency;
         
         fetchRates().then(() => {
           // After fetching rates, also try to fetch EUR specifically
