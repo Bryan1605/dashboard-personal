@@ -384,7 +384,7 @@
       
       function convertBStoCurrency() {
         const rate = getCurrentRate();
-        if (rate <= 0) return;
+        if (rate <= 0 || !bsInput || !usdInput || !resultEl || !directionEl) return;
         const bs = parseFloat(bsInput.value) || 0;
         const result = bs / rate;
         usdInput.value = result.toFixed(2);
@@ -392,12 +392,13 @@
         resultEl.textContent = symbol + result.toFixed(2) + ' ' + currentCurrency;
         directionEl.textContent = 'BS → ' + currentCurrency;
         // Also update the result box label
-        document.querySelector('.result-label').textContent = 'Resultado (' + currentCurrency + ')';
+        const resultLabelEl = document.querySelector('.result-label');
+        if (resultLabelEl) resultLabelEl.textContent = 'Resultado (' + currentCurrency + ')';
       }
       
       function convertCurrencyToBS() {
         const rate = getCurrentRate();
-        if (rate <= 0) return;
+        if (rate <= 0 || !bsInput || !usdInput || !resultEl || !directionEl) return;
         const currencyValue = parseFloat(usdInput.value) || 0;
         const bs = currencyValue * rate;
         bsInput.value = bs.toFixed(2);
@@ -407,7 +408,7 @@
       
       function updateRateDisplay() {
         const rate = getCurrentRate();
-        if (rate > 0) {
+        if (rate > 0 && rateBadge && rateValue) {
           rateBadge.className = 'rate-badge';
           rateValue.textContent = '1 ' + currentCurrency + ' = ' + rate.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' BS';
         }
@@ -416,23 +417,27 @@
       function setRate(currency, rate) {
         rates[currency] = rate;
         localStorage.setItem(currency === 'USD' ? STORAGE_KEY_USD : STORAGE_KEY_EUR, rate.toString());
-        // Update global rates object
+        // Update global rates objects
         window.ratesObj = rates;
+        window.converterRates = rates;
         updateRateDisplay();
         convertBStoCurrency();
       }
       
       function setError(message) {
+        if (!rateBadge || !rateValue) return;
         rateBadge.className = 'rate-badge error';
         rateValue.textContent = message;
       }
       
       function setLoading() {
+        if (!rateBadge || !rateValue) return;
         rateBadge.className = 'rate-badge loading';
         rateValue.textContent = 'Obteniendo tasas...';
       }
       
       function changeCurrency() {
+        if (!currencySelect) return;
         currentCurrency = currencySelect.value;
         
         // Update labels based on currency
@@ -443,8 +448,10 @@
         
         // If EUR rate not loaded, try to fetch it
         if (currentCurrency === 'EUR' && rates.EUR <= 0) {
-          rateBadge.className = 'rate-badge loading';
-          rateValue.textContent = 'Obteniendo tasa EUR...';
+          if (rateBadge && rateValue) {
+            rateBadge.className = 'rate-badge loading';
+            rateValue.textContent = 'Obteniendo tasa EUR...';
+          }
           fetchEURRate().then(eurFetched => {
             if (!eurFetched) {
               // Try all APIs again
@@ -615,64 +622,86 @@
       }
       
       // Event listeners
-      bsInput.addEventListener('input', convertBStoCurrency);
-      usdInput.addEventListener('input', convertCurrencyToBS);
-      convertBtn.addEventListener('click', convertBStoCurrency);
-      refreshBtn.addEventListener('click', fetchRates);
-      currencySelect.addEventListener('change', changeCurrency);
+      if (bsInput) bsInput.addEventListener('input', convertBStoCurrency);
+      if (usdInput) usdInput.addEventListener('input', convertCurrencyToBS);
+      if (convertBtn) convertBtn.addEventListener('click', convertBStoCurrency);
+      if (refreshBtn) refreshBtn.addEventListener('click', fetchRates);
+      if (currencySelect) currencySelect.addEventListener('change', changeCurrency);
       
       // Initialize
       function init() {
         updateClock();
         setInterval(updateClock, 1000);
-        getLastSavedRate();
         
-        // Expose rates object globally for manual EUR function
-        window.ratesObj = rates;
+        // Get saved rates from localStorage
+        const savedUSD = localStorage.getItem(STORAGE_KEY_USD);
+        const savedEUR = localStorage.getItem(STORAGE_KEY_EUR);
+        if (savedUSD) {
+          rates.USD = parseFloat(savedUSD);
+          window.ratesObj = rates;
+          updateRateDisplay();
+          convertBStoCurrency();
+        }
+        if (savedEUR) {
+          rates.EUR = parseFloat(savedEUR);
+          window.ratesObj = rates;
+        }
         
-        // Set initial currency labels
-        currentCurrency = currencySelect.value;
-        const currencyLabel = currentCurrency === 'USD' ? 'Dolares (USD)' : 'Euros (EUR)';
+        // Set initial currency labels - with null checks
+        currentCurrency = currencySelect ? currencySelect.value : 'USD';
         const currencyLabelEl = document.getElementById('currency-input-label');
-        if (currencyLabelEl) currencyLabelEl.textContent = currencyLabel;
-        if (convertBtn) convertBtn.textContent = 'Convertir a ' + currentCurrency;
-        
-        fetchRates().then(() => {
-          // After fetching rates, also try to fetch EUR specifically
-          fetchEURRate();
-        });
+        if (currencyLabelEl) {
+          currencyLabelEl.textContent = currentCurrency === 'USD' ? 'Dolares (USD)' : 'Euros (EUR)';
+        }
+        if (convertBtn) {
+          convertBtn.textContent = 'Convertir a ' + currentCurrency;
+        }
       }
       
       init();
     })();
     
-    // Function to manually set USD rate
-    window.setManualUSD = function() {
-      const manualRate = parseFloat(document.getElementById('usd-manual-rate').value);
-      if (manualRate && manualRate > 0) {
-        localStorage.setItem('bcvRateUSD', manualRate.toString());
-        if (window.ratesObj) {
-          window.ratesObj.USD = manualRate;
-        }
-        const event = new Event('input');
-        document.getElementById('bs-input').dispatchEvent(event);
-        alert('Tasa USD actualizada: ' + manualRate + ' BS');
-      }
-    };
+    // Global constants for manual rate function
+    var STORAGE_KEY_USD = 'bcvRateUSD';
+    var STORAGE_KEY_EUR = 'bcvRateEUR';
+    window.converterRates = { USD: 0, EUR: 0 };
     
-    // Function to manually set EUR rate
-    window.setManualEUR = function() {
-      const manualRate = parseFloat(document.getElementById('eur-manual-rate').value);
+    // Global functions for manual rate input
+    function setManualRate(currency) {
+      const inputId = currency === 'USD' ? 'usd-manual-rate' : 'eur-manual-rate';
+      const storageKey = currency === 'USD' ? STORAGE_KEY_USD : STORAGE_KEY_EUR;
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      
+      const manualRate = parseFloat(input.value);
       if (manualRate && manualRate > 0) {
-        localStorage.setItem('bcvRateEUR', manualRate.toString());
-        if (window.ratesObj) {
-          window.ratesObj.EUR = manualRate;
+        localStorage.setItem(storageKey, manualRate.toString());
+        
+        // Update rates if available
+        if (window.converterRates) {
+          window.converterRates[currency] = manualRate;
         }
-        const event = new Event('change');
-        document.getElementById('currency-select').dispatchEvent(event);
-        alert('Tasa EUR actualizada: ' + manualRate + ' BS');
+        
+        // Trigger conversion
+        const bsInput = document.getElementById('bs-input');
+        if (bsInput) {
+          bsInput.dispatchEvent(new Event('input'));
+        }
+        
+        // Update display
+        const rateBadge = document.getElementById('rate-badge');
+        const rateValue = document.getElementById('rate-value');
+        if (rateBadge && rateValue) {
+          rateBadge.className = 'rate-badge';
+          rateValue.textContent = '1 ' + currency + ' = ' + manualRate.toLocaleString('es-ES') + ' BS (Manual)';
+        }
+        
+        alert('Tasa ' + currency + ' actualizada: ' + manualRate + ' BS');
       }
-    };
+    }
+    
+    window.setManualUSD = function() { setManualRate('USD'); };
+    window.setManualEUR = function() { setManualRate('EUR'); };
   </script>
   
   <!-- User Menu Dropdown -->
