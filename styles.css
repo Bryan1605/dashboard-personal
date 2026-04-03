@@ -1295,3 +1295,141 @@ h3 {
   font-size: 0.75rem;
   opacity: 0.9;
 }
+
+/* 33. Month Calendar */
+.month-calendar {
+  margin-top: var(--space-md);
+}
+
+.month-header {
+  text-align: center;
+  margin-bottom: var(--space-md);
+}
+
+.month-title {
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.weekday-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: var(--space-sm);
+}
+
+.weekday-label {
+  text-align: center;
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.month-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  font-size: 0.75rem;
+  position: relative;
+  cursor: default;
+}
+
+.month-day.empty {
+  background: transparent;
+}
+
+.month-day.today {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.month-day.completed {
+  background: var(--success);
+  color: white;
+}
+
+.month-day.partial {
+  background: var(--warning);
+  color: white;
+}
+
+.day-number {
+  font-weight: 600;
+}
+
+.day-completed {
+  font-size: 0.5rem;
+  position: absolute;
+  bottom: 2px;
+}
+
+.month-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  font-size: 0.625rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legend-dot.completed {
+  background: var(--success);
+}
+
+.legend-dot.partial {
+  background: var(--warning);
+}
+
+.legend-dot.none {
+  background: var(--input-bg);
+}
+
+/* 34. Mini Heatmap (30 days) */
+.mini-heatmap {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  margin-top: var(--space-sm);
+  max-width: 300px;
+}
+
+.mini-heatmap-box {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--input-bg);
+}
+
+.mini-heatmap-box.completed {
+  background: var(--success);
+}
+
+.habit-stats {
+  margin-top: var(--space-xs);
+}
+
+.total-completions {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}

@@ -823,13 +823,75 @@ function renderHabitChecklist() {
     return;
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-  const last7 = Array.from({length: 7}, (_, i) => {
+  
+  // Generate last 30 days for heatmap
+  const last30Days = Array.from({length: 30}, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return { date: d.toISOString().split('T')[0], label: dayNames[d.getDay()] };
+    d.setDate(d.getDate() - (29 - i));
+    return { date: d.toISOString().split('T')[0], day: d.getDate(), label: dayNames[d.getDay()] };
   });
+
+  // Generate current month calendar
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  
+  const monthDays = [];
+  // Add empty cells for days before the 1st
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    monthDays.push(null);
+  }
+  // Add days of the month
+  for (let i = 1; i <= daysInMonth; i++) {
+    const dateStr = new Date(currentYear, currentMonth, i).toISOString().split('T')[0];
+    const completedCount = habits.filter(h => h.history && h.history.includes(dateStr)).length;
+    monthDays.push({ day: i, date: dateStr, completed: completedCount, total: habits.length });
+  }
+
+  // Calculate overall completion per day for the month
+  const monthCompletionData = monthDays.filter(d => d !== null).map(d => {
+    const pct = d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0;
+    return { ...d, percentage: pct };
+  });
+
+  // Create month grid HTML
+  const monthGrid = `
+    <div class="month-calendar">
+      <div class="month-header">
+        <span class="month-title">${today.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>
+      </div>
+      <div class="weekday-labels">
+        ${dayNames.map(d => `<span class="weekday-label">${d}</span>`).join('')}
+      </div>
+      <div class="month-grid">
+        ${monthDays.map(d => {
+          if (d === null) return '<div class="month-day empty"></div>';
+          const isToday = d.date === todayStr;
+          const isCompleted = d.completed === d.total && d.total > 0;
+          const hasSome = d.completed > 0;
+          
+          let dayClass = 'month-day';
+          if (isToday) dayClass += ' today';
+          if (isCompleted) dayClass += ' completed';
+          else if (hasSome) dayClass += ' partial';
+          
+          return `<div class="${dayClass}" title="${d.date}: ${d.completed}/${d.total} hábitos">
+            <span class="day-number">${d.day}</span>
+            ${d.completed > 0 ? `<span class="day-completed">${d.completed}</span>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="month-legend">
+        <span class="legend-item"><span class="legend-dot completed"></span> Completado</span>
+        <span class="legend-item"><span class="legend-dot partial"></span> Parcial</span>
+        <span class="legend-item"><span class="legend-dot none"></span> Sin completar</span>
+      </div>
+    </div>
+  `;
 
   container.innerHTML = `
     ${getXPDisplay()}
@@ -854,17 +916,22 @@ function renderHabitChecklist() {
         </div>
       </div>
     </div>
+    <div class="card mt-md">
+      <h3>📅 Este Mes</h3>
+      ${monthGrid}
+    </div>
     <div class="section-header mt-md">
       <h2>📋 Mis Hábitos</h2>
     </div>
   ` + habits.map(h => {
     const streak = calculateStreak(h.history);
-    const heatmap = last7.map(d => `
-      <div class="heatmap-day">
-        <div class="heatmap-box ${h.history && h.history.includes(d.date) ? 'completed' : ''} ${d.date === today ? 'today' : ''}"></div>
-        <span class="heatmap-day-label">${d.label}</span>
-      </div>
-    `).join('');
+    const totalCompletions = h.history ? h.history.length : 0;
+    
+    // Mini heatmap for each habit (last 30 days)
+    const habitHeatmap = last30Days.map(d => {
+      const isCompleted = h.history && h.history.includes(d.date);
+      return `<div class="mini-heatmap-box ${isCompleted ? 'completed' : ''}" title="${d.date}"></div>`;
+    }).join('');
 
     return `
       <div class="habit-card animate-in">
@@ -880,7 +947,10 @@ function renderHabitChecklist() {
               <span class="habit-xp">+${XP_PER_HABIT} XP</span>
             </div>
             ${h.notes ? `<p class="text-secondary" style="font-size: 0.875rem; margin-top: 4px;">${h.notes}</p>` : ''}
-            <div class="heatmap">${heatmap}</div>
+            <div class="habit-stats">
+              <span class="total-completions">${totalCompletions} completaciones totales</span>
+            </div>
+            <div class="mini-heatmap" title="Últimos 30 días">${habitHeatmap}</div>
           </div>
         </div>
         <div class="habit-actions">
