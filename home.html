@@ -192,6 +192,10 @@
     </div>
     
     <div class="quick-stats" id="quickStats">
+      <!-- XP Progress Card -->
+      <div class="quick-stat" style="grid-column: span 2;">
+        <div id="home-xp-widget"></div>
+      </div>
       <div class="quick-stat">
         <div class="quick-stat-icon">📈</div>
         <div class="quick-stat-value" id="statIncome">$0</div>
@@ -355,18 +359,16 @@
     }
     
     function loadStats() {
-      const db = JSON.parse(localStorage.getItem(DB_NAME) || '{"income":[],"expenses":[],"debts":[],"savings":[],"loans":[],"habits":[]}');
+      const db = getDB();
       
-      const totalIncome = db.income.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
-      const totalExpenses = db.expenses.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
-      const totalDebts = db.debts.reduce((sum, i) => sum + parseFloat(i.amountToPay || 0), 0);
-      const totalSavings = db.savings.reduce((sum, s) => sum + parseFloat(s.currentAmount || 0), 0);
+      const totalIncome = (db.income || []).reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+      const totalExpenses = (db.expenses || []).reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+      const totalDebts = (db.debts || []).reduce((sum, i) => sum + parseFloat(i.amountToPay || 0), 0);
+      const totalSavings = (db.savings || []).reduce((sum, s) => sum + parseFloat(s.currentAmount || 0), 0);
       const totalLoansPending = (db.loans || []).filter(l => !l.returned).reduce((sum, l) => sum + parseFloat(l.amount || 0), 0);
-      const habits = db.habits.filter(h => !h.archived);
-      const completedToday = habits.filter(h => {
-        const today = new Date().toISOString().split('T')[0];
-        return h.history && h.history.includes(today);
-      }).length;
+      const habits = (db.habits || []).filter(h => !h.archived);
+      const today = new Date().toISOString().split('T')[0];
+      const completedToday = habits.filter(h => h.history && h.history.includes(today)).length;
       
       document.getElementById('statIncome').textContent = formatCurrency(totalIncome);
       document.getElementById('statExpenses').textContent = formatCurrency(totalExpenses);
@@ -374,6 +376,34 @@
       document.getElementById('statSavings').textContent = formatCurrency(totalSavings);
       document.getElementById('statLoans').textContent = formatCurrency(totalLoansPending);
       document.getElementById('statHabits').textContent = completedToday + '/' + habits.length;
+      
+      // Load XP widget
+      renderHomeXPWidget();
+    }
+    
+    function renderHomeXPWidget() {
+      const container = document.getElementById('home-xp-widget');
+      if (!container) return;
+      
+      const db = getDB();
+      const userStats = db.userStats || { xp: 0, totalCompleted: 0, longestStreak: 0, unlockedAchievements: [] };
+      const progress = getXPProgress(userStats.xp);
+      
+      container.innerHTML = `
+        <div class="home-xp-card">
+          <div class="home-xp-header">
+            <span class="home-xp-level">⭐ Nivel ${progress.level}</span>
+            <span class="home-xp-total">${userStats.xp} / ${progress.nextXP} XP</span>
+          </div>
+          <div class="home-xp-bar">
+            <div class="home-xp-fill" style="width: ${Math.min(progress.progress, 100)}%"></div>
+          </div>
+          <div class="home-xp-footer">
+            <span>🔥 Racha maxima: ${userStats.longestStreak || 0} dias</span>
+            <span>🏆 ${userStats.unlockedAchievements?.length || 0}/${ACHIEVEMENTS.length} logros</span>
+          </div>
+        </div>
+      `;
     }
     
     document.addEventListener('DOMContentLoaded', () => {
