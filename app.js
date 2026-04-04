@@ -264,8 +264,22 @@ function getCurrentUser() {
 // ==========================================
 
 function getDB() {
-  const data = localStorage.getItem(DB_NAME);
-  return data ? JSON.parse(data) : {
+  try {
+    const data = localStorage.getItem(DB_NAME);
+    if (data) {
+      const parsed = JSON.parse(data);
+      // Ensure tasks array exists
+      if (!parsed.tasks) parsed.tasks = [];
+      // Ensure categories.tasks exists
+      if (!parsed.categories) parsed.categories = {};
+      if (!parsed.categories.tasks) parsed.categories.tasks = ['Personal', 'Trabajo', 'Estudio', 'Salud', 'Finanzas', 'Otro'];
+      return parsed;
+    }
+  } catch (e) {
+    console.error('Error parsing localStorage:', e);
+  }
+  
+  return {
     income: [],
     expenses: [],
     debts: [],
@@ -1153,14 +1167,26 @@ function deleteHabit(id) {
 // ==========================================
 
 function addTask() {
+  console.log('addTask called');
   const db = getDB();
+  console.log('DB:', db);
+  console.log('tasks array:', db.tasks);
+  
   const title = document.getElementById('task-title').value;
   const date = document.getElementById('task-date').value;
   const category = document.getElementById('task-category').value;
   const type = document.getElementById('task-type').value;
   const notes = document.getElementById('task-notes').value;
   
+  console.log('Form values:', { title, date, category, type, notes });
+  
   if (!title || !date) return alert('Completa los campos requeridos');
+  
+  // Ensure tasks array exists
+  if (!db.tasks) {
+    console.log('Initializing tasks array');
+    db.tasks = [];
+  }
   
   db.tasks.push({
     id: Date.now(),
@@ -1172,6 +1198,9 @@ function addTask() {
     completed: false,
     createdAt: new Date().toISOString()
   });
+  
+  console.log('Tasks after push:', db.tasks);
+  
   saveDB(db);
   document.getElementById('task-form').reset();
   renderTasks();
