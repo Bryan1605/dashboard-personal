@@ -361,6 +361,18 @@ function migrateData() {
     };
   }
 
+  // Initialize tasks array if not exists
+  if (!db.tasks) {
+    needsSave = true;
+    db.tasks = [];
+  }
+
+  // Initialize categories.tasks if not exists
+  if (!db.categories.tasks) {
+    needsSave = true;
+    db.categories.tasks = ['Personal', 'Trabajo', 'Estudio', 'Salud', 'Finanzas', 'Otro'];
+  }
+
   // Migrate habits structure
   if (!db.habits) db.habits = [];
   db.habits = db.habits.map(habit => {
