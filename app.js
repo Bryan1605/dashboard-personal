@@ -725,13 +725,10 @@ function renderTransactionLists() {
       
       return `
         <div class="flex items-center justify-between gap-sm transaction-item" style="${isOverdue ? 'border-left: 3px solid var(--danger);' : ''}">
-          <div style="flex: 1;">
-            <div style="font-weight: 500;">${d.creditor}</div>
-            <div class="text-secondary" style="font-size: 0.75rem;">
-              ${d.description ? d.description + ' - ' : ''}Vence: ${dueDateStr}
-              ${isOverdue ? ' <span style="color: var(--danger); font-weight: 600;">(Vencido)</span>' : ''}
-            </div>
-          </div>
+          <span>
+            ${dueDateStr} ${d.description ? '- ' + d.description : ''} ${isOverdue ? '(Vencido)' : ''}
+            <span style="color: var(--text-secondary); font-size: 0.75rem;">[${d.creditor}]</span>
+          </span>
           <span style="color: var(--warning);">${formatCurrency(d.amountToPay)}</span>
           <button class="btn-delete" onclick="deleteDebt(${d.id})" title="Eliminar">x</button>
         </div>
