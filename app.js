@@ -694,10 +694,15 @@ function renderTransactionLists() {
   const incomeList = document.getElementById('income-list');
   if (incomeList) {
     incomeList.innerHTML = db.income.slice(-5).reverse().map(i => `
-      <div class="flex items-center justify-between gap-sm transaction-item">
-        <span>${i.date}: ${i.source}</span>
-        <span style="color: var(--secondary);">${formatCurrency(i.amount)}</span>
-        <button class="btn-delete" onclick="deleteIncome(${i.id})" title="Eliminar">x</button>
+      <div class="transaction-row">
+        <div class="transaction-info">
+          <span class="transaction-date">${i.date}</span>
+          <span class="transaction-desc">${i.source}</span>
+        </div>
+        <div class="transaction-amount income-amount">
+          <span>${formatCurrency(i.amount)}</span>
+          <button class="btn-delete" onclick="deleteIncome(${i.id})" title="Eliminar">x</button>
+        </div>
       </div>
     `).join('') || '<p class="text-secondary">Sin ingresos registrados</p>';
   }
@@ -706,10 +711,15 @@ function renderTransactionLists() {
   const expenseList = document.getElementById('expense-list');
   if (expenseList) {
     expenseList.innerHTML = db.expenses.slice(-5).reverse().map(e => `
-      <div class="flex items-center justify-between gap-sm transaction-item">
-        <span>${e.date} [${e.category}]</span>
-        <span style="color: var(--danger);">-${formatCurrency(e.amount)}</span>
-        <button class="btn-delete" onclick="deleteExpense(${e.id})" title="Eliminar">x</button>
+      <div class="transaction-row">
+        <div class="transaction-info">
+          <span class="transaction-date">${e.date}</span>
+          <span class="transaction-category">${e.category}</span>
+        </div>
+        <div class="transaction-amount expense-amount">
+          <span>-${formatCurrency(e.amount)}</span>
+          <button class="btn-delete" onclick="deleteExpense(${e.id})" title="Eliminar">x</button>
+        </div>
       </div>
     `).join('') || '<p class="text-secondary">Sin gastos registrados</p>';
   }
@@ -721,16 +731,19 @@ function renderTransactionLists() {
       const dueDate = d.dueDate ? new Date(d.dueDate) : null;
       const today = new Date();
       const isOverdue = dueDate && dueDate < today;
-      const dueDateStr = dueDate ? dueDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Sin fecha';
+      const dueDateStr = dueDate ? dueDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sin fecha';
       
       return `
-        <div class="flex items-center justify-between gap-sm transaction-item" style="${isOverdue ? 'border-left: 3px solid var(--danger);' : ''}">
-          <span>
-            ${dueDateStr} ${d.description ? '- ' + d.description : ''} ${isOverdue ? '(Vencido)' : ''}
-            <span style="color: var(--text-secondary); font-size: 0.75rem;">[${d.creditor}]</span>
-          </span>
-          <span style="color: var(--warning);">${formatCurrency(d.amountToPay)}</span>
-          <button class="btn-delete" onclick="deleteDebt(${d.id})" title="Eliminar">x</button>
+        <div class="transaction-row ${isOverdue ? 'overdue' : ''}">
+          <div class="transaction-info">
+            <span class="transaction-date">${dueDateStr}</span>
+            <span class="transaction-desc">${d.description || d.creditor}</span>
+            <span class="transaction-category">${d.creditor}</span>
+          </div>
+          <div class="transaction-amount debt-amount">
+            <span>${formatCurrency(d.amountToPay)}</span>
+            <button class="btn-delete" onclick="deleteDebt(${d.id})" title="Eliminar">x</button>
+          </div>
         </div>
       `;
     }).join('') || '<p class="text-secondary">Sin deudas registradas</p>';
@@ -759,14 +772,18 @@ function renderTransactionLists() {
   if (loansList) {
     const loans = db.loans || [];
     loansList.innerHTML = loans.slice(-5).reverse().map(l => `
-      <div class="flex items-center justify-between gap-sm transaction-item">
-        <div>
-          <div>${l.borrower}</div>
-          <div style="font-size: 0.75rem; color: var(--text-secondary);">${l.returned ? '✓ Devuelto' : 'Pendiente'}</div>
+      <div class="transaction-row ${l.returned ? 'returned' : ''}">
+        <div class="transaction-info">
+          <span class="transaction-date">${l.date}</span>
+          <span class="transaction-desc">${l.borrower}</span>
         </div>
-        <span style="color: var(--info);">${formatCurrency(l.amount)}</span>
-        <button class="btn-delete" onclick="toggleLoanReturned(${l.id})" title="${l.returned ? 'Marcar pendiente' : 'Marcar devuelto'}">✓</button>
-        <button class="btn-delete" onclick="deleteLoan(${l.id})" title="Eliminar">x</button>
+        <div class="transaction-amount loan-amount">
+          <span>${formatCurrency(l.amount)}</span>
+          <button class="btn-delete" onclick="toggleLoanReturned(${l.id})" title="${l.returned ? 'Marcar no devuelto' : 'Marcar devuelto'}">
+            ${l.returned ? '↩' : '✓'}
+          </button>
+          <button class="btn-delete" onclick="deleteLoan(${l.id})" title="Eliminar">x</button>
+        </div>
       </div>
     `).join('') || '<p class="text-secondary">Sin prestamos registrados</p>';
   }
