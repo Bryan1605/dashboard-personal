@@ -1527,3 +1527,121 @@ h3 {
 .transaction-amount.loan-amount {
   color: var(--info);
 }
+
+/* 36. Bullet Journal / Tasks */
+.task-date-group {
+  margin-bottom: var(--space-lg);
+}
+
+.task-date-group.today-group {
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.task-date-group.past-group {
+  opacity: 0.7;
+}
+
+.task-date-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 2px solid var(--border);
+}
+
+.task-day-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.task-month-day {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.task-today-badge {
+  background: var(--primary);
+  color: white;
+  font-size: 0.625rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.task-item:hover {
+  background: var(--input-bg);
+}
+
+.task-item.completed {
+  opacity: 0.6;
+}
+
+.task-check {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.task-check:hover {
+  border-color: var(--primary);
+}
+
+.task-item.completed .task-check {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-title {
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.task-category {
+  font-size: 0.625rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  width: fit-content;
+}
+
+.task-notes {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}

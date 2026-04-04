@@ -141,6 +141,46 @@
       <div id="habit-checklist"></div>
     </div>
 
+    <!-- Bullet Journal / Tasks -->
+    <div class="card mt-md">
+      <h2>📝 Bullet Journal</h2>
+      <form id="task-form">
+        <div class="form-group">
+          <label for="task-title">Título</label>
+          <input type="text" id="task-title" class="input" placeholder="Que necesitas hacer?" required>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-date">Fecha</label>
+            <input type="date" id="task-date" class="input" required>
+          </div>
+          <div class="form-group">
+            <label for="task-type">Tipo</label>
+            <select id="task-type" class="input">
+              <option value="task">Tarea ◻</option>
+              <option value="event">Evento 🔵</option>
+              <option value="activity">Actividad 🟢</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="task-category">Categoría</label>
+          <select id="task-category" class="input"></select>
+        </div>
+        
+        <div class="form-group">
+          <label for="task-notes">Notas (opcional)</label>
+          <input type="text" id="task-notes" class="input" placeholder="Detalles adicionales">
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%;">+ Agregar</button>
+      </form>
+      
+      <div id="task-checklist" class="mt-md"></div>
+    </div>
+
     <!-- Link back -->
     <div class="export-section mt-md">
       <a href="index.html" class="btn btn-ghost" style="text-decoration: none;">
@@ -281,6 +321,27 @@
           btn.textContent = next === 'dark' ? '☀️' : '🌙';
         });
       }
+      
+      // Initialize task form
+      const taskForm = document.getElementById('task-form');
+      if (taskForm) {
+        taskForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          addTask();
+        });
+      }
+      
+      // Set today's date as default for task date
+      const taskDate = document.getElementById('task-date');
+      if (taskDate) {
+        taskDate.value = new Date().toISOString().split('T')[0];
+      }
+      
+      // Populate task category select
+      populateTaskCategorySelect();
+      
+      // Render tasks
+      renderTasks();
     });
   </script>
   

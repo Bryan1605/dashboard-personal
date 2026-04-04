@@ -272,10 +272,12 @@ function getDB() {
     savings: [],
     loans: [],
     habits: [],
+    tasks: [],
     categories: {
       expenses: ['General', 'Comida', 'Transporte', 'Ocio', 'Salud'],
       savings: ['Emergencia', 'Vacaciones', 'Inversion', 'Compra Grande', 'Otro'],
-      habits: ['Salud', 'Finanzas', 'Personal', 'Trabajo']
+      habits: ['Salud', 'Finanzas', 'Personal', 'Trabajo'],
+      tasks: ['Personal', 'Trabajo', 'Estudio', 'Salud', 'Finanzas', 'Otro']
     }
   };
 }
@@ -481,7 +483,8 @@ function populateCategorySelects() {
     'expense-category': db.categories.expenses,
     'saving-category': db.categories.savings,
     'habit-category': db.categories.habits,
-    'edit-habit-category': db.categories.habits
+    'edit-habit-category': db.categories.habits,
+    'task-category': db.categories.tasks || ['Personal', 'Trabajo', 'Estudio', 'Salud', 'Finanzas', 'Otro']
   };
 
   Object.keys(selects).forEach(id => {
@@ -497,6 +500,21 @@ function populateCategorySelects() {
       select.appendChild(opt);
     });
     if (current && selects[id].includes(current)) select.value = current;
+  });
+}
+
+function populateTaskCategorySelect() {
+  const db = getDB();
+  const select = document.getElementById('task-category');
+  if (!select) return;
+  
+  const categories = db.categories.tasks || ['Personal', 'Trabajo', 'Estudio', 'Salud', 'Finanzas', 'Otro'];
+  select.innerHTML = '';
+  categories.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    select.appendChild(opt);
   });
 }
 
@@ -1116,6 +1134,130 @@ function deleteHabit(id) {
   db.habits = db.habits.filter(h => h.id !== id);
   saveDB(db);
   renderHabitChecklist();
+}
+
+// ==========================================
+// BULLET JOURNAL / TASKS
+// ==========================================
+
+function addTask() {
+  const db = getDB();
+  const title = document.getElementById('task-title').value;
+  const date = document.getElementById('task-date').value;
+  const category = document.getElementById('task-category').value;
+  const type = document.getElementById('task-type').value;
+  const notes = document.getElementById('task-notes').value;
+  
+  if (!title || !date) return alert('Completa los campos requeridos');
+  
+  db.tasks.push({
+    id: Date.now(),
+    title,
+    date,
+    category,
+    type,
+    notes,
+    completed: false,
+    createdAt: new Date().toISOString()
+  });
+  saveDB(db);
+  document.getElementById('task-form').reset();
+  renderTasks();
+}
+
+function toggleTask(id) {
+  const db = getDB();
+  const task = db.tasks.find(t => t.id === id);
+  if (task) {
+    task.completed = !task.completed;
+    saveDB(db);
+    renderTasks();
+  }
+}
+
+function deleteTask(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  const db = getDB();
+  db.tasks = db.tasks.filter(t => t.id !== id);
+  saveDB(db);
+  renderTasks();
+}
+
+function renderTasks() {
+  const container = document.getElementById('task-checklist');
+  if (!container) return;
+  
+  const db = getDB();
+  const tasks = db.tasks || [];
+  
+  if (tasks.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📝</div>
+        <p>No hay tareas registradas</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Sort by date
+  const sortedTasks = [...tasks].sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Group by date
+  const groupedTasks = {};
+  sortedTasks.forEach(task => {
+    if (!groupedTasks[task.date]) groupedTasks[task.date] = [];
+    groupedTasks[task.date].push(task);
+  });
+  
+  const today = new Date().toISOString().split('T')[0];
+  const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  
+  container.innerHTML = Object.entries(groupedTasks).map(([date, dateTasks]) => {
+    const d = new Date(date);
+    const isToday = date === today;
+    const isPast = date < today;
+    const dayName = dayNames[d.getDay()];
+    const monthDay = monthNames[d.getMonth()] + ' ' + d.getDate();
+    
+    return `
+      <div class="task-date-group ${isToday ? 'today-group' : ''} ${isPast && !isToday ? 'past-group' : ''}">
+        <div class="task-date-header">
+          <span class="task-day-name">${dayName}</span>
+          <span class="task-month-day">${monthDay}</span>
+          ${isToday ? '<span class="task-today-badge">HOY</span>' : ''}
+        </div>
+        <div class="task-list">
+          ${dateTasks.map(task => {
+            const typeIcons = {
+              'task': '◻',
+              'event': '🔵',
+              'activity': '🟢'
+            };
+            const typeColors = {
+              'task': 'var(--primary)',
+              'event': 'var(--info)',
+              'activity': 'var(--success)'
+            };
+            return `
+              <div class="task-item ${task.completed ? 'completed' : ''}">
+                <button class="task-check" onclick="toggleTask(${task.id})">
+                  ${task.completed ? '✓' : typeIcons[task.type] || '◻'}
+                </button>
+                <div class="task-content">
+                  <span class="task-title" style="${task.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task.title}</span>
+                  <span class="task-category" style="background: ${typeColors[task.type]}20; color: ${typeColors[task.type]};">${task.category}</span>
+                  ${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}
+                </div>
+                <button class="btn-delete" onclick="deleteTask(${task.id})" title="Eliminar">x</button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ==========================================
