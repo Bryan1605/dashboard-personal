@@ -532,6 +532,23 @@
   </div>
   
   <script>
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      
+      const btn = document.getElementById('theme-toggle');
+      if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+      
+      closeUserMenu();
+    }
+    
+    function closeUserMenu() {
+      const menu = document.getElementById('user-menu');
+      if (menu) menu.classList.add('modal-hidden');
+    }
+    
     function toggleUserMenu() {
       const menu = document.getElementById('user-menu');
       menu.classList.toggle('modal-hidden');
