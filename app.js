@@ -913,7 +913,8 @@ function renderHabitMiniList() {
     return;
   }
 
-  container.innerHTML = habits.slice(0, 6).map(h => `
+  if (container) {
+    container.innerHTML = habits.slice(0, 6).map(h => `
     <div class="habit-mini-item ${h.completed ? 'completed' : ''}" onclick="toggleHabit(${h.id})">
       <div class="habit-mini-checkbox">${h.completed ? '✓' : ''}</div>
       <span>${h.name}</span>
