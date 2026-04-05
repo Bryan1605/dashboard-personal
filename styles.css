@@ -22,33 +22,37 @@ body {
   background: var(--bg);
   min-height: 100vh;
   padding-bottom: 80px;
-  transition: background 0.3s, color 0.3s;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* 2. CSS Variables */
 :root {
-  /* Colors - Light Theme */
-  --primary: #3B82F6;
-  --primary-dark: #2563EB;
+  /* Colors - Vibrant Modern Palette */
+  --primary: #6366F1;
+  --primary-dark: #4F46E5;
+  --primary-light: #818CF8;
   --secondary: #10B981;
   --success: #10B981;
-  --info: #3B82F6;
+  --info: #06B6D4;
   --danger: #EF4444;
   --warning: #F59E0B;
   --purple: #8B5CF6;
+  --pink: #EC4899;
+  --orange: #F97316;
   
-  /* Neutrals */
-  --bg: #F8FAFC;
+  /* Neutrals - Light Theme */
+  --bg: #F1F5F9;
   --card: #FFFFFF;
-  --text: #1E293B;
+  --text: #0F172A;
   --text-secondary: #64748B;
   --border: #E2E8F0;
-  --input-bg: #F1F5F9;
+  --input-bg: #F8FAFC;
   
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+  /* Shadows - More depth */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg: 0 12px 24px rgba(0,0,0,0.15);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.25);
   
   /* Spacing */
   --space-xs: 4px;
@@ -57,28 +61,31 @@ body {
   --space-lg: 24px;
   --space-xl: 32px;
   
-  /* Border Radius */
+  /* Border Radius - More modern rounded corners */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
   
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
+  --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark Theme */
+/* Dark Theme - Enhanced */
 [data-theme="dark"] {
-  --bg: #0F172A;
-  --card: #1E293B;
-  --text: #F1F5F9;
+  --bg: #0C0E14;
+  --card: #161A22;
+  --text: #F8FAFC;
   --text-secondary: #94A3B8;
-  --border: #334155;
-  --input-bg: #1E293B;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.5);
+  --border: #2D3342;
+  --input-bg: #1C212B;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 24px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
 /* 3. Typography */
@@ -128,8 +135,10 @@ h3 {
   body { padding-bottom: 0; }
   .main-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: var(--space-lg);
+    max-width: 800px;
+    margin: 0 auto;
   }
 }
 
@@ -173,11 +182,15 @@ h3 {
 .btn-primary {
   background: var(--primary);
   color: white;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover {
   background: var(--primary-dark);
   transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
@@ -277,8 +290,8 @@ h3 {
 /* 8. KPI Cards */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--space-sm);
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
   margin-bottom: var(--space-lg);
 }
 
@@ -288,19 +301,451 @@ h3 {
   }
 }
 
-.kpi-card {
+/* Dashboard Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.dashboard-title h1 {
+  margin-bottom: var(--space-xs);
+  text-align: left;
+  font-size: 1.5rem;
+}
+
+.dashboard-title .text-secondary {
+  font-size: 0.875rem;
+}
+
+.xp-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%);
+  border-radius: var(--radius-lg);
+  color: white;
+  box-shadow: var(--shadow-glow);
+}
+
+.xp-level {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.xp-level strong {
+  font-size: 1.25rem;
+}
+
+.xp-bar {
+  width: 80px;
+  height: 8px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xp-fill {
+  display: block;
+  height: 100%;
+  background: white;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.xp-text {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+/* Quick Action Cards */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+@media (min-width: 768px) {
+  .quick-actions {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.quick-action-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  border: 2px solid var(--border);
+  text-decoration: none;
+  color: var(--text);
+}
+
+.quick-action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary);
+}
+
+.quick-action-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-sm);
+  display: block;
+}
+
+.quick-action-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Recent Notes Cards */
+.recent-notes-section {
+  margin-bottom: var(--space-lg);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notes-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-md);
+}
+
+.note-card {
   background: var(--card);
   border-radius: var(--radius-md);
   padding: var(--space-md);
-  text-align: center;
-  box-shadow: var(--shadow-sm);
+  border-left: 3px solid var(--primary);
+  transition: all var(--transition-fast);
+  cursor: pointer;
 }
 
-.kpi-card.income { border-left: 4px solid var(--secondary); }
-.kpi-card.expense { border-left: 4px solid var(--danger); }
-.kpi-card.debt { border-left: 4px solid var(--warning); }
-.kpi-card.savings { border-left: 4px solid var(--success); }
-.kpi-card.loans { border-left: 4px solid var(--info); }
+.note-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateX(4px);
+}
+
+.note-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.note-card-mood {
+  font-size: 1.25rem;
+}
+
+.note-card-date {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.note-card-content {
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Habits Progress Bar */
+.habits-progress-bar {
+  background: var(--card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+
+.habits-progress-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.habits-icon {
+  font-size: 1.5rem;
+}
+
+.habits-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+.habits-manage-link {
+  font-size: 0.875rem;
+  color: var(--primary);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(99, 102, 241, 0.1);
+  transition: all var(--transition-fast);
+}
+
+.habits-manage-link:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.habits-progress-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  flex-wrap: wrap;
+}
+
+.habits-progress-ring {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+.circular-chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 3;
+}
+
+.circle {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.5s ease;
+}
+
+.habits-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.habits-mini-list {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  min-width: 200px;
+}
+
+.habit-mini-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--input-bg);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 2px solid transparent;
+}
+
+.habit-mini-item:hover {
+  border-color: var(--primary);
+}
+
+.habit-mini-item.completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.habit-mini-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+.habit-mini-item.completed .habit-mini-checkbox {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+/* View More Links */
+.view-more-link {
+  float: right;
+  font-size: 0.75rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+/* Quick Access Grid */
+.quick-access-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+@media (min-width: 768px) {
+  .quick-access-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.quick-access-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border);
+  text-decoration: none;
+  transition: all var(--transition-smooth);
+}
+
+.quick-access-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.quick-access-card.income {
+  border-left: 4px solid var(--success);
+}
+
+.quick-access-card.income:hover {
+  border-color: var(--success);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(16, 185, 129, 0.08) 100%);
+}
+
+.quick-access-card.expense {
+  border-left: 4px solid var(--danger);
+}
+
+.quick-access-card.expense:hover {
+  border-color: var(--danger);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(239, 68, 68, 0.08) 100%);
+}
+
+.quick-access-card.debt {
+  border-left: 4px solid var(--warning);
+}
+
+.quick-access-card.debt:hover {
+  border-color: var(--warning);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(245, 158, 11, 0.08) 100%);
+}
+
+.quick-access-card.habits {
+  border-left: 4px solid var(--primary);
+}
+
+.quick-access-card.habits:hover {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(99, 102, 241, 0.08) 100%);
+}
+
+.quick-access-icon {
+  font-size: 2rem;
+}
+
+.quick-access-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quick-access-label {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.quick-access-action {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.quick-access-card:hover .quick-access-action {
+  color: var(--primary);
+}
+
+.view-more-link:hover {
+  color: var(--primary-dark);
+  transform: translateX(4px);
+}
+
+.kpi-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-smooth);
+  border: 1px solid var(--border);
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-card.income { 
+  border-left: 4px solid var(--secondary);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(16, 185, 129, 0.08) 100%);
+}
+.kpi-card.expense { 
+  border-left: 4px solid var(--danger);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(239, 68, 68, 0.08) 100%);
+}
+.kpi-card.debt { 
+  border-left: 4px solid var(--warning);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(245, 158, 11, 0.08) 100%);
+}
+.kpi-card.savings { 
+  border-left: 4px solid var(--success);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(16, 185, 129, 0.08) 100%);
+}
+.kpi-card.loans { 
+  border-left: 4px solid var(--info);
+  background: linear-gradient(135deg, var(--card) 0%, rgba(6, 182, 212, 0.08) 100%);
+}
 
 .kpi-label {
   font-size: 0.75rem;
@@ -684,16 +1129,23 @@ h3 {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 56px;
-  background: rgba(32, 32, 32, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  height: 64px;
+  background: rgba(22, 26, 34, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
+  padding: 0 16px;
   z-index: 1000;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
+}
+
+[data-theme="light"] .taskbar {
+  background: rgba(255, 255, 255, 0.9);
+  border-top: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
 }
 
 .taskbar-center {
@@ -715,15 +1167,16 @@ h3 {
 
 .taskbar-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  color: rgba(255,255,255,0.7);
+  gap: 2px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  color: rgba(255,255,255,0.6);
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
   border: none;
   background: transparent;
   cursor: pointer;
@@ -731,13 +1184,32 @@ h3 {
 }
 
 .taskbar-item:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.12);
   color: white;
+  transform: translateY(-2px);
 }
 
 .taskbar-item.active {
-  background: rgba(255,255,255,0.15);
+  background: rgba(99, 102, 241, 0.2);
   color: white;
+}
+
+.taskbar-item.active .icon {
+  transform: scale(1.1);
+}
+
+[data-theme="light"] .taskbar-item {
+  color: rgba(0,0,0,0.6);
+}
+
+[data-theme="light"] .taskbar-item:hover {
+  background: rgba(0,0,0,0.08);
+  color: var(--text);
+}
+
+[data-theme="light"] .taskbar-item.active {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
 }
 
 .taskbar-item .icon {
@@ -771,15 +1243,24 @@ h3 {
   border-radius: 50%;
   background: transparent;
   border: none;
-  color: white;
   font-size: 1.3rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  transition: all var(--transition-normal);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+[data-theme="light"] .taskbar-theme,
+[data-theme="light"] .taskbar-user {
+  color: var(--text);
+}
+
+[data-theme="dark"] .taskbar-theme,
+[data-theme="dark"] .taskbar-user {
+  color: white;
 }
 
 .taskbar-theme:hover,
@@ -790,6 +1271,11 @@ h3 {
 .taskbar-theme:active,
 .taskbar-user:active {
   background: rgba(255,255,255,0.25);
+}
+
+[data-theme="light"] .taskbar-theme:hover,
+[data-theme="light"] .taskbar-user:hover {
+  background: rgba(0,0,0,0.1);
 }
 
 /* Taskbar always visible on all screen sizes */

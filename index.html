@@ -78,7 +78,17 @@
 </head>
 <body>
   <div class="container">
-    <h1>📊 Dashboard Personal</h1>
+    <div class="dashboard-header">
+      <div class="dashboard-title">
+        <h1>📊 Mi Dashboard</h1>
+        <p class="text-secondary" id="current-date-display"></p>
+      </div>
+      <div class="xp-badge" id="xp-badge-display">
+        <span class="xp-level">Nivel <strong id="header-level">1</strong></span>
+        <span class="xp-bar"><span class="xp-fill" id="header-xp-fill"></span></span>
+        <span class="xp-text"><span id="header-xp-current">0</span> / <span id="header-xp-next">100</span> XP</span>
+      </div>
+    </div>
 
     <!-- KPI Cards -->
     <div class="kpi-grid">
@@ -105,6 +115,53 @@
       </div>
     </div>
 
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <a href="#" class="quick-action-card" onclick="document.getElementById('income-form').scrollIntoView({behavior:'smooth'}); return false;">
+        <span class="quick-action-icon">💰</span>
+        <span class="quick-action-label">Ingreso</span>
+      </a>
+      <a href="#" class="quick-action-card" onclick="document.getElementById('expense-form').scrollIntoView({behavior:'smooth'}); return false;">
+        <span class="quick-action-icon">🛒</span>
+        <span class="quick-action-label">Gasto</span>
+      </a>
+      <a href="#" class="quick-action-card" onclick="document.getElementById('debt-form').scrollIntoView({behavior:'smooth'}); return false;">
+        <span class="quick-action-icon">📋</span>
+        <span class="quick-action-label">Deuda</span>
+      </a>
+      <a href="profile.html" class="quick-action-card">
+        <span class="quick-action-icon">📝</span>
+        <span class="quick-action-label">Notas</span>
+      </a>
+    </div>
+
+    <!-- Recent Notes -->
+    <div class="recent-notes-section" id="recent-notes-section">
+      <div class="section-title">
+        <span>📝</span> Notas Recientes
+      </div>
+      <div class="notes-cards" id="notes-cards"></div>
+    </div>
+
+    <!-- Habits Progress Bar -->
+    <div class="habits-progress-bar" id="habits-progress-bar">
+      <div class="habits-progress-header">
+        <span class="habits-icon">🎯</span>
+        <span class="habits-title">Hábitos de Hoy</span>
+        <a href="habits.html" class="habits-manage-link">Gestionar</a>
+      </div>
+      <div class="habits-progress-content">
+        <div class="habits-progress-ring">
+          <svg viewBox="0 0 36 36" class="circular-chart">
+            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="circle" id="habits-progress-circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="habits-progress-text" id="habit-summary">0/0</span>
+        </div>
+        <div class="habits-mini-list" id="habit-mini-list"></div>
+      </div>
+    </div>
+
     <!-- Charts -->
     <div class="grid grid-2">
       <div class="card">
@@ -123,193 +180,77 @@
     </div>
 
     <div class="main-layout mt-md">
-      <!-- Left Column: Forms -->
-      <div class="card">
-        <h2>📝 Registrar Transacción</h2>
-
-        <!-- Income Form -->
-        <div class="section-header">
-          <h3>Ingreso</h3>
-        </div>
-        <form id="income-form">
-          <div class="form-group">
-            <label for="income-source">Fuente</label>
-            <input type="text" id="income-source" class="input" placeholder="Ej: Salario, Freelance" required>
+      <!-- Quick Access Cards -->
+      <div class="quick-access-grid">
+        <a href="income.html" class="quick-access-card income">
+          <div class="quick-access-icon">💰</div>
+          <div class="quick-access-info">
+            <span class="quick-access-label">Ingresos</span>
+            <span class="quick-access-action">Agregar →</span>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="income-amount">Monto</label>
-              <input type="number" id="income-amount" class="input" placeholder="0.00" step="0.01" required>
-            </div>
-            <div class="form-group">
-              <label for="income-date">Fecha</label>
-              <input type="date" id="income-date" class="input" required>
-            </div>
+        </a>
+        <a href="expenses.html" class="quick-access-card expense">
+          <div class="quick-access-icon">🛒</div>
+          <div class="quick-access-info">
+            <span class="quick-access-label">Gastos</span>
+            <span class="quick-access-action">Agregar →</span>
           </div>
-          <button type="submit" class="btn btn-secondary" style="width: 100%;">+ Añadir Ingreso</button>
-        </form>
-
-        <!-- Expense Form -->
-        <div class="section-header mt-md">
-          <h3>Gasto</h3>
-        </div>
-        <form id="expense-form">
-          <div class="form-group">
-            <label for="expense-category">Categoría</label>
-            <input type="text" id="expense-category" class="input" list="expense-categories" placeholder="Selecciona o escribe" required>
-            <datalist id="expense-categories"></datalist>
+        </a>
+        <a href="debts.html" class="quick-access-card debt">
+          <div class="quick-access-icon">📋</div>
+          <div class="quick-access-info">
+            <span class="quick-access-label">Deudas</span>
+            <span class="quick-access-action">Agregar →</span>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="expense-amount">Monto</label>
-              <input type="number" id="expense-amount" class="input" placeholder="0.00" step="0.01" required>
-            </div>
-            <div class="form-group">
-              <label for="expense-date">Fecha</label>
-              <input type="date" id="expense-date" class="input" required>
-            </div>
+        </a>
+        <a href="habits.html" class="quick-access-card habits">
+          <div class="quick-access-icon">🎯</div>
+          <div class="quick-access-info">
+            <span class="quick-access-label">Hábitos</span>
+            <span class="quick-access-action">Gestionar →</span>
           </div>
-          <button type="submit" class="btn btn-primary" style="width: 100%;">+ Añadir Gasto</button>
-        </form>
-
-        <!-- Debt Form -->
-        <div class="section-header mt-md">
-          <h3>Deuda</h3>
-        </div>
-        <form id="debt-form">
-          <div class="form-group">
-            <label for="debt-creditor">Acreedor</label>
-            <input type="text" id="debt-creditor" class="input" placeholder="Nombre del acreedor" required>
-          </div>
-          <div class="form-group">
-            <label for="debt-description">Descripcion (opcional)</label>
-            <input type="text" id="debt-description" class="input" placeholder="Ej: Prestamo pessoal, Tarjeta de credito">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="debt-total-amount">Monto Total</label>
-              <input type="number" id="debt-total-amount" class="input" placeholder="0.00" step="0.01" required>
-            </div>
-            <div class="form-group">
-              <label for="debt-due-amount">A Pagar</label>
-              <input type="number" id="debt-due-amount" class="input" placeholder="0.00" step="0.01" required>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="debt-due-date">Fecha Limite</label>
-            <input type="date" id="debt-due-date" class="input" required>
-          </div>
-          <button type="submit" class="btn btn-danger" style="width: 100%;">+ Anadir Deuda</button>
-        </form>
-
-        <!-- Savings Form -->
-        <div class="section-header mt-md">
-          <h3>Ahorro</h3>
-        </div>
-        <form id="saving-form">
-          <div class="form-group">
-            <label for="saving-goal">Meta de Ahorro</label>
-            <input type="text" id="saving-goal" class="input" placeholder="Ej: Vacaciones, Emergencia" required>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="saving-target-amount">Monto Meta</label>
-              <input type="number" id="saving-target-amount" class="input" placeholder="0.00" step="0.01" required>
-            </div>
-            <div class="form-group">
-              <label for="saving-current-amount">Monto Actual</label>
-              <input type="number" id="saving-current-amount" class="input" placeholder="0.00" step="0.01">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="saving-date">Fecha Inicio</label>
-            <input type="date" id="saving-date" class="input">
-          </div>
-          <button type="submit" class="btn" style="width: 100%; background: var(--success);">+ Añadir Ahorro</button>
-        </form>
-
-        <!-- Loan Form -->
-        <div class="section-header mt-md">
-          <h3>Préstamo Dado</h3>
-        </div>
-        <form id="loan-form">
-          <div class="form-group">
-            <label for="loan-borrower">A Quien</label>
-            <input type="text" id="loan-borrower" class="input" placeholder="Nombre de la persona" required>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="loan-amount">Monto</label>
-              <input type="number" id="loan-amount" class="input" placeholder="0.00" step="0.01" required>
-            </div>
-            <div class="form-group">
-              <label for="loan-date">Fecha</label>
-              <input type="date" id="loan-date" class="input" required>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="loan-due-date">Fecha Límite (opcional)</label>
-            <input type="date" id="loan-due-date" class="input">
-          </div>
-          <button type="submit" class="btn" style="width: 100%; background: var(--info);">+ Añadir Préstamo</button>
-        </form>
-
-        <!-- Category Management -->
-        <div class="section-header mt-md">
-          <h3>Categorías de Gastos</h3>
-        </div>
-        <div class="form-row">
-          <input type="text" id="new-expense-cat" class="input" placeholder="Nueva categoría">
-          <button class="btn btn-primary" onclick="addCategory('expenses', document.getElementById('new-expense-cat').value)">+</button>
-        </div>
-        <div id="expense-category-list" class="category-list"></div>
-
-        <!-- Export -->
-        <div class="export-section">
-          <a href="data.html" class="btn btn-secondary" style="text-decoration: none;">
-            ⚙️ Gestión de Datos
-          </a>
-        </div>
+        </a>
       </div>
 
-        <!-- Right Column: History & Habits -->
+      <!-- Right Column: History -->
       <div class="card">
         <div class="section-header">
           <h2>📜 Historial</h2>
         </div>
 
-        <h3 class="text-secondary">Ingresos</h3>
+        <h3 class="text-secondary">
+          Ingresos 
+          <a href="income.html" class="view-more-link">Ver más →</a>
+        </h3>
         <div id="income-list" class="mb-md transaction-list"></div>
 
-        <h3 class="text-secondary">Gastos</h3>
+        <h3 class="text-secondary">
+          Gastos
+          <a href="expenses.html" class="view-more-link">Ver más →</a>
+        </h3>
         <div id="expense-list" class="mb-md transaction-list"></div>
 
-        <h3 class="text-secondary">Deudas</h3>
+        <h3 class="text-secondary">
+          Deudas
+          <a href="debts.html" class="view-more-link">Ver más →</a>
+        </h3>
         <div id="debt-list" class="mb-md transaction-list"></div>
 
-        <h3 class="text-secondary">Ahorros</h3>
+        <h3 class="text-secondary">
+          Ahorros
+          <a href="data.html" class="view-more-link">Ver más →</a>
+        </h3>
         <div id="savings-list" class="mb-md transaction-list"></div>
 
-        <h3 class="text-secondary">Préstamos Dados</h3>
+        <h3 class="text-secondary">
+          Préstamos Dados
+          <a href="data.html" class="view-more-link">Ver más →</a>
+        </h3>
         <div id="loans-list" class="mb-md transaction-list"></div>
 
-        <hr style="border: none; border-top: 1px solid var(--border); margin: var(--space-lg) 0;">
-        
-        <!-- XP Progress Widget -->
-        <div id="dashboard-xp-widget"></div>
-        
-        <div class="section-header">
-          <h2>🎯 Hábitos de Hoy</h2>
-        </div>
-        <div class="progress-ring-container" style="justify-content: center;">
-          <span class="progress-title">Progreso:</span>
-          <span id="habit-summary" style="font-weight: 700; color: var(--secondary);">0/0</span>
-        </div>
-        <div id="habit-mini-list" class="mt-md"></div>
-
         <div class="export-section mt-md">
-          <a href="habits.html" class="btn btn-primary" style="text-decoration: none;">
-            ⚙️ Gestionar Hábitos
+          <a href="data.html" class="btn btn-secondary" style="text-decoration: none;">
+            ⚙️ Gestión de Datos
           </a>
         </div>
       </div>
@@ -319,7 +260,7 @@
   <!-- Windows Taskbar -->
   <nav class="taskbar">
     <div class="taskbar-right">
-      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema" onclick="toggleTheme()">🌙</button>
       <button class="taskbar-user" id="user-btn" title="Usuario" onclick="toggleUserMenu()">👤</button>
     </div>
     
@@ -332,9 +273,17 @@
         <span class="icon">📊</span>
         <span>Dashboard</span>
       </a>
-      <a href="converter.html" class="taskbar-item">
-        <span class="icon">💱</span>
-        <span>Conversor</span>
+      <a href="income.html" class="taskbar-item">
+        <span class="icon">💰</span>
+        <span>Ingresos</span>
+      </a>
+      <a href="expenses.html" class="taskbar-item">
+        <span class="icon">🛒</span>
+        <span>Gastos</span>
+      </a>
+      <a href="debts.html" class="taskbar-item">
+        <span class="icon">📋</span>
+        <span>Deudas</span>
       </a>
       <a href="habits.html" class="taskbar-item">
         <span class="icon">🎯</span>
@@ -343,6 +292,10 @@
       <a href="data.html" class="taskbar-item">
         <span class="icon">⚙️</span>
         <span>Datos</span>
+      </a>
+      <a href="profile.html" class="taskbar-item">
+        <span class="icon">👤</span>
+        <span>Perfil</span>
       </a>
     </div>
     
@@ -361,19 +314,6 @@
   <script src="app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      var btn = document.getElementById('theme-toggle');
-      if (btn) {
-        var saved = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', saved);
-        btn.textContent = saved === 'dark' ? '☀️' : '🌙';
-        btn.addEventListener('click', function() {
-          var current = document.documentElement.getAttribute('data-theme');
-          var next = current === 'dark' ? 'light' : 'dark';
-          document.documentElement.setAttribute('data-theme', next);
-          localStorage.setItem('theme', next);
-          btn.textContent = next === 'dark' ? '☀️' : '🌙';
-        });
-      }
       initTheme();
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('income-date').value = today;

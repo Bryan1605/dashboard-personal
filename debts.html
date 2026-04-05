@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deudas - Dashboard Personal</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .debts-page {
+      padding-bottom: 80px;
+    }
+    
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-lg);
+      flex-wrap: wrap;
+      gap: var(--space-md);
+    }
+    
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    
+    .page-title h1 {
+      margin-bottom: 0;
+    }
+    
+    .total-card {
+      background: linear-gradient(135deg, var(--warning) 0%, #D97706 100%);
+      color: white;
+      padding: var(--space-lg) var(--space-xl);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+    
+    .total-card .label {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .total-card .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+    
+    .total-card .period {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: var(--space-xs);
+    }
+    
+    .filter-bar {
+      display: flex;
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .filter-bar select {
+      padding: 10px 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    
+    .debt-summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    
+    .debt-summary-card {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    
+    .debt-summary-card .label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-xs);
+    }
+    
+    .debt-summary-card .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    
+    .debt-summary-card.total .value {
+      color: var(--warning);
+    }
+    
+    .debt-summary-card.paid .value {
+      color: var(--success);
+    }
+    
+    .debt-summary-card.remaining .value {
+      color: var(--danger);
+    }
+    
+    .debt-card {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      margin-bottom: var(--space-md);
+      border: 1px solid var(--border);
+      transition: all var(--transition-fast);
+    }
+    
+    .debt-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .debt-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-sm);
+    }
+    
+    .debt-creditor {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 1rem;
+    }
+    
+    .debt-amount {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--warning);
+    }
+    
+    .debt-description {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-sm);
+    }
+    
+    .debt-details {
+      display: flex;
+      gap: var(--space-lg);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-sm);
+    }
+    
+    .debt-progress {
+      background: var(--border);
+      border-radius: var(--radius-sm);
+      height: 8px;
+      overflow: hidden;
+      margin-bottom: var(--space-sm);
+    }
+    
+    .debt-progress-fill {
+      height: 100%;
+      background: var(--warning);
+      transition: width 0.3s ease;
+    }
+    
+    .debt-progress-fill.paid {
+      background: var(--success);
+    }
+    
+    .debt-actions {
+      display: flex;
+      gap: var(--space-sm);
+      justify-content: flex-end;
+    }
+    
+    .debt-actions button {
+      background: var(--input-bg);
+      border: none;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all var(--transition-fast);
+    }
+    
+    .debt-actions button:hover {
+      background: var(--border);
+    }
+    
+    .debt-actions .btn-pay {
+      background: var(--success);
+      color: white;
+    }
+    
+    .debt-actions .btn-edit {
+      color: var(--primary);
+    }
+    
+    .debt-actions .btn-delete {
+      color: var(--danger);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: var(--space-xl);
+      color: var(--text-secondary);
+    }
+    
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: var(--space-md);
+    }
+    
+    .add-form-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+    }
+    
+    .add-form-card h3 {
+      margin-bottom: var(--space-md);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    
+    .taskbar-user {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    
+    .taskbar-user:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .user-menu {
+      position: fixed;
+      bottom: 70px;
+      right: 10px;
+      background: var(--card);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 200px;
+      z-index: 1001;
+      overflow: hidden;
+    }
+    
+    .user-menu.modal-hidden {
+      display: none !important;
+    }
+    
+    .user-menu-content {
+      padding: 8px 0;
+    }
+    
+    .user-info {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    
+    .user-icon {
+      font-size: 1.5rem;
+    }
+    
+    #user-email {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    
+    .user-menu-item:hover {
+      background: var(--input-bg);
+    }
+    
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1002;
+    }
+    
+    .modal-backdrop.modal-hidden {
+      display: none;
+    }
+    
+    .edit-modal {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      width: 90%;
+      max-width: 450px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .edit-modal h3 {
+      margin-bottom: var(--space-lg);
+      color: var(--text);
+    }
+    
+    .edit-modal .form-group {
+      margin-bottom: var(--space-md);
+    }
+    
+    .edit-modal label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    
+    .edit-modal input {
+      width: 100%;
+      padding: 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+    }
+    
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-pay-modal {
+      background: var(--success);
+      color: white;
+      border: none;
+    }
+    
+    .btn-save {
+      background: var(--warning);
+      color: white;
+      border: none;
+    }
+    
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="container debts-page">
+    <div class="page-header">
+      <div class="page-title">
+        <h1>📋 Deudas</h1>
+      </div>
+      <div class="total-card">
+        <div class="label">Total Pendiente</div>
+        <div class="value" id="total-debts">$0.00</div>
+        <div class="period">Todas las deudas</div>
+      </div>
+    </div>
+    
+    <div class="debt-summary-cards">
+      <div class="debt-summary-card total">
+        <div class="label">Monto Total</div>
+        <div class="value" id="debt-total-amount">$0.00</div>
+      </div>
+      <div class="debt-summary-card paid">
+        <div class="label">Pagado</div>
+        <div class="value" id="debt-paid-amount">$0.00</div>
+      </div>
+      <div class="debt-summary-card remaining">
+        <div class="label">Pendiente</div>
+        <div class="value" id="debt-remaining-amount">$0.00</div>
+      </div>
+    </div>
+    
+    <div class="add-form-card">
+      <h3>➕ Agregar Deuda</h3>
+      <form id="add-debt-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Acreedor</label>
+            <input type="text" id="debt-creditor" class="input" placeholder="Nombre del acreedor" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Descripción (opcional)</label>
+            <input type="text" id="debt-description" class="input" placeholder="Ej: Prestamo personal">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Monto Total</label>
+            <input type="number" id="debt-total-amount-input" class="input" placeholder="0.00" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label>Monto a Pagar</label>
+            <input type="number" id="debt-due-amount" class="input" placeholder="0.00" step="0.01" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Fecha Límite</label>
+          <input type="date" id="debt-due-date" class="input" required>
+        </div>
+        <button type="submit" class="btn" style="width: 100%; background: var(--warning);">+ Añadir Deuda</button>
+      </form>
+    </div>
+    
+    <h3 style="margin-bottom: var(--space-md);">📋 Historial de Deudas</h3>
+    <div id="debts-list-full"></div>
+  </div>
+  
+  <nav class="taskbar">
+    <div class="taskbar-right">
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema" onclick="toggleTheme()">🌙</button>
+      <button class="taskbar-user" id="user-btn" title="Usuario" onclick="toggleUserMenu()">👤</button>
+    </div>
+    
+    <div class="taskbar-center">
+      <a href="home.html" class="taskbar-item">
+        <span class="icon">🏠</span>
+        <span>Inicio</span>
+      </a>
+      <a href="index.html" class="taskbar-item">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="income.html" class="taskbar-item">
+        <span class="icon">💰</span>
+        <span>Ingresos</span>
+      </a>
+      <a href="expenses.html" class="taskbar-item">
+        <span class="icon">🛒</span>
+        <span>Gastos</span>
+      </a>
+      <a href="debts.html" class="taskbar-item active">
+        <span class="icon">📋</span>
+        <span>Deudas</span>
+      </a>
+      <a href="habits.html" class="taskbar-item">
+        <span class="icon">🎯</span>
+        <span>Habitos</span>
+      </a>
+      <a href="data.html" class="taskbar-item">
+        <span class="icon">⚙️</span>
+        <span>Datos</span>
+      </a>
+      <a href="profile.html" class="taskbar-item">
+        <span class="icon">👤</span>
+        <span>Perfil</span>
+      </a>
+    </div>
+  </nav>
+  
+  <div class="user-menu modal-hidden" id="user-menu">
+    <div class="user-menu-content">
+      <div class="user-info">
+        <span class="user-icon">👤</span>
+        <span id="user-email">usuario@email.com</span>
+      </div>
+      <a href="profile.html" class="user-menu-item">
+        <span>👤</span>
+        <span>Perfil</span>
+      </a>
+      <div class="user-menu-item" onclick="toggleTheme()">
+        <span>🌙</span>
+        <span>Cambiar tema</span>
+      </div>
+      <div class="user-menu-item" onclick="logout()">
+        <span>🚪</span>
+        <span>Cerrar sesión</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-backdrop modal-hidden" id="edit-modal-backdrop" onclick="closeEditDebtModal(event)">
+    <div class="edit-modal" onclick="event.stopPropagation()">
+      <h3>✏️ Editar Deuda</h3>
+      <input type="hidden" id="edit-debt-id">
+      <div class="form-group">
+        <label>Acreedor</label>
+        <input type="text" id="edit-debt-creditor" class="input" required>
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <input type="text" id="edit-debt-description" class="input">
+      </div>
+      <div class="form-group">
+        <label>Monto Total</label>
+        <input type="number" id="edit-debt-total" class="input" step="0.01" required>
+      </div>
+      <div class="form-group">
+        <label>Monto a Pagar</label>
+        <input type="number" id="edit-debt-amount" class="input" step="0.01" required>
+      </div>
+      <div class="form-group">
+        <label>Fecha Límite</label>
+        <input type="date" id="edit-debt-date" class="input" required>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeEditDebtModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveDebtEdit()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    let editingDebtId = null;
+    
+    function initDebtsPage() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('debt-due-date').value = today;
+      
+      renderDebtsList();
+      
+      document.getElementById('add-debt-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addDebtFromPage();
+      });
+    }
+    
+    function renderDebtsList() {
+      const db = getDB();
+      const debts = db.debts || [];
+      
+      debts.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+      
+      const totalAmount = debts.reduce((sum, d) => sum + parseFloat(d.totalAmount || 0), 0);
+      const totalPaid = debts.reduce((sum, d) => sum + parseFloat(d.amountToPay || 0), 0);
+      const remaining = totalAmount - totalPaid;
+      
+      document.getElementById('total-debts').textContent = formatCurrency(remaining);
+      document.getElementById('debt-total-amount').textContent = formatCurrency(totalAmount);
+      document.getElementById('debt-paid-amount').textContent = formatCurrency(totalPaid);
+      document.getElementById('debt-remaining-amount').textContent = formatCurrency(remaining);
+      
+      const container = document.getElementById('debts-list-full');
+      
+      if (debts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📋</div>
+            <p>No hay deudas registradas</p>
+            <p class="text-secondary">Agrega tu primera deuda arriba</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = debts.map(item => {
+        const paid = parseFloat(item.amountToPay || 0);
+        const total = parseFloat(item.totalAmount || 0);
+        const percentPaid = total > 0 ? (paid / total) * 100 : 0;
+        const dueDate = new Date(item.dueDate);
+        const isOverdue = dueDate < new Date() && percentPaid < 100;
+        
+        return `
+          <div class="debt-card">
+            <div class="debt-card-header">
+              <div>
+                <div class="debt-creditor">${escapeHtml(item.creditor)}</div>
+                ${item.description ? `<div class="debt-description">${escapeHtml(item.description)}</div>` : ''}
+              </div>
+              <div class="debt-amount">${formatCurrency(paid)} / ${formatCurrency(total)}</div>
+            </div>
+            <div class="debt-details">
+              <span>📅 Vence: ${formatDate(item.dueDate)}</span>
+              <span>📊 ${Math.round(percentPaid)}% pagado</span>
+            </div>
+            <div class="debt-progress">
+              <div class="debt-progress-fill ${percentPaid >= 100 ? 'paid' : ''}" style="width: ${Math.min(percentPaid, 100)}%"></div>
+            </div>
+            <div class="debt-actions">
+              <button class="btn-pay" onclick="payDebt(${item.id})" ${percentPaid >= 100 ? 'disabled style="opacity:0.5"' : ''}>
+                💵 Pagar
+              </button>
+              <button class="btn-edit" onclick="openEditDebt(${item.id})">✏️</button>
+              <button class="btn-delete" onclick="deleteDebt(${item.id})">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function addDebtFromPage() {
+      const creditor = document.getElementById('debt-creditor').value;
+      const description = document.getElementById('debt-description').value;
+      const totalAmount = parseFloat(document.getElementById('debt-total-amount-input').value);
+      const amountToPay = parseFloat(document.getElementById('debt-due-amount').value);
+      const dueDate = document.getElementById('debt-due-date').value;
+      
+      if (!creditor || !totalAmount || !dueDate) return;
+      
+      const db = getDB();
+      if (!db.debts) db.debts = [];
+      
+      db.debts.push({
+        id: Date.now(),
+        creditor,
+        description,
+        totalAmount,
+        amountToPay: amountToPay || totalAmount,
+        dueDate
+      });
+      
+      saveDB(db);
+      document.getElementById('add-debt-form').reset();
+      document.getElementById('debt-due-date').value = new Date().toISOString().split('T')[0];
+      
+      addXP(5);
+      renderDebtsList();
+    }
+    
+    function payDebt(id) {
+      const db = getDB();
+      const debt = db.debts.find(d => d.id === id);
+      if (!debt) return;
+      
+      const paid = parseFloat(debt.amountToPay || 0);
+      const total = parseFloat(debt.totalAmount || 0);
+      
+      const payment = prompt(`Ingresa el monto a pagar (Restante: ${formatCurrency(total - paid)})`);
+      if (!payment) return;
+      
+      const amount = parseFloat(payment);
+      if (isNaN(amount) || amount <= 0) return alert('Monto inválido');
+      
+      debt.amountToPay = paid + amount;
+      saveDB(db);
+      
+      addXP(3);
+      renderDebtsList();
+    }
+    
+    function openEditDebt(id) {
+      const db = getDB();
+      const debt = db.debts.find(d => d.id === id);
+      if (!debt) return;
+      
+      editingDebtId = id;
+      document.getElementById('edit-debt-id').value = id;
+      document.getElementById('edit-debt-creditor').value = debt.creditor;
+      document.getElementById('edit-debt-description').value = debt.description || '';
+      document.getElementById('edit-debt-total').value = debt.totalAmount;
+      document.getElementById('edit-debt-amount').value = debt.amountToPay;
+      document.getElementById('edit-debt-date').value = debt.dueDate;
+      
+      document.getElementById('edit-modal-backdrop').classList.remove('modal-hidden');
+    }
+    
+    function closeEditDebtModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('edit-modal-backdrop').classList.add('modal-hidden');
+      editingDebtId = null;
+    }
+    
+    function saveDebtEdit() {
+      const id = editingDebtId;
+      const db = getDB();
+      const debt = db.debts.find(d => d.id === id);
+      
+      if (debt) {
+        debt.creditor = document.getElementById('edit-debt-creditor').value;
+        debt.description = document.getElementById('edit-debt-description').value;
+        debt.totalAmount = parseFloat(document.getElementById('edit-debt-total').value);
+        debt.amountToPay = parseFloat(document.getElementById('edit-debt-amount').value);
+        debt.dueDate = document.getElementById('edit-debt-date').value;
+        
+        saveDB(db);
+        closeEditDebtModal();
+        renderDebtsList();
+      }
+    }
+    
+    function deleteDebt(id) {
+      if (!confirm('¿Eliminar esta deuda?')) return;
+      
+      const db = getDB();
+      db.debts = db.debts.filter(d => d.id !== id);
+      saveDB(db);
+      renderDebtsList();
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('es-VE', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      initTheme();
+      initDebtsPage();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastos - Dashboard Personal</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .expenses-page {
+      padding-bottom: 80px;
+    }
+    
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-lg);
+      flex-wrap: wrap;
+      gap: var(--space-md);
+    }
+    
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    
+    .page-title h1 {
+      margin-bottom: 0;
+    }
+    
+    .total-card {
+      background: linear-gradient(135deg, var(--danger) 0%, #DC2626 100%);
+      color: white;
+      padding: var(--space-lg) var(--space-xl);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+    
+    .total-card .label {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .total-card .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+    
+    .total-card .period {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: var(--space-xs);
+    }
+    
+    .filter-bar {
+      display: flex;
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .filter-bar select {
+      padding: 10px 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    
+    .category-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    
+    .category-stat-card {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    
+    .category-stat-card .category-name {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-xs);
+    }
+    
+    .category-stat-card .category-amount {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--danger);
+    }
+    
+    .category-stat-card .category-count {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .transaction-card {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      margin-bottom: var(--space-sm);
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all var(--transition-fast);
+    }
+    
+    .transaction-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .transaction-info {
+      flex: 1;
+    }
+    
+    .transaction-source {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 1rem;
+    }
+    
+    .transaction-category {
+      display: inline-block;
+      background: var(--input-bg);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    .transaction-date {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    
+    .transaction-amount {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--danger);
+    }
+    
+    .transaction-actions {
+      display: flex;
+      gap: var(--space-sm);
+      margin-left: var(--space-md);
+    }
+    
+    .transaction-actions button {
+      background: var(--input-bg);
+      border: none;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all var(--transition-fast);
+    }
+    
+    .transaction-actions button:hover {
+      background: var(--border);
+    }
+    
+    .transaction-actions .btn-edit {
+      color: var(--primary);
+    }
+    
+    .transaction-actions .btn-delete {
+      color: var(--danger);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: var(--space-xl);
+      color: var(--text-secondary);
+    }
+    
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: var(--space-md);
+    }
+    
+    .add-form-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+    }
+    
+    .add-form-card h3 {
+      margin-bottom: var(--space-md);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    
+    .taskbar-user {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    
+    .taskbar-user:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .user-menu {
+      position: fixed;
+      bottom: 70px;
+      right: 10px;
+      background: var(--card);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 200px;
+      z-index: 1001;
+      overflow: hidden;
+    }
+    
+    .user-menu.modal-hidden {
+      display: none !important;
+    }
+    
+    .user-menu-content {
+      padding: 8px 0;
+    }
+    
+    .user-info {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    
+    .user-icon {
+      font-size: 1.5rem;
+    }
+    
+    #user-email {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    
+    .user-menu-item:hover {
+      background: var(--input-bg);
+    }
+    
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1002;
+    }
+    
+    .modal-backdrop.modal-hidden {
+      display: none;
+    }
+    
+    .edit-modal {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      width: 90%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .edit-modal h3 {
+      margin-bottom: var(--space-lg);
+      color: var(--text);
+    }
+    
+    .edit-modal .form-group {
+      margin-bottom: var(--space-md);
+    }
+    
+    .edit-modal label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    
+    .edit-modal input, .edit-modal select {
+      width: 100%;
+      padding: 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+    }
+    
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-save {
+      background: var(--danger);
+      color: white;
+      border: none;
+    }
+    
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="container expenses-page">
+    <div class="page-header">
+      <div class="page-title">
+        <h1>🛒 Gastos</h1>
+      </div>
+      <div class="total-card">
+        <div class="label">Total Este Mes</div>
+        <div class="value" id="total-expenses">$0.00</div>
+        <div class="period" id="expenses-period"></div>
+      </div>
+    </div>
+    
+    <div class="filter-bar">
+      <select id="expenses-filter-month" onchange="renderExpensesList()">
+        <option value="all">Todos los meses</option>
+      </select>
+      <select id="expenses-filter-year" onchange="renderExpensesList()">
+        <option value="all">Todos los años</option>
+      </select>
+    </div>
+    
+    <div id="category-stats" class="category-stats"></div>
+    
+    <div class="add-form-card">
+      <h3>➕ Agregar Gasto</h3>
+      <form id="add-expense-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoría</label>
+            <input type="text" id="expense-category" class="input" list="expense-categories" placeholder="Selecciona o escribe" required>
+            <datalist id="expense-categories"></datalist>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Monto</label>
+            <input type="number" id="expense-amount" class="input" placeholder="0.00" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" id="expense-date" class="input" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">+ Añadir Gasto</button>
+      </form>
+    </div>
+    
+    <h3 style="margin-bottom: var(--space-md);">📋 Historial de Gastos</h3>
+    <div id="expenses-list-full"></div>
+  </div>
+  
+  <nav class="taskbar">
+    <div class="taskbar-right">
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema" onclick="toggleTheme()">🌙</button>
+      <button class="taskbar-user" id="user-btn" title="Usuario" onclick="toggleUserMenu()">👤</button>
+    </div>
+    
+    <div class="taskbar-center">
+      <a href="home.html" class="taskbar-item">
+        <span class="icon">🏠</span>
+        <span>Inicio</span>
+      </a>
+      <a href="index.html" class="taskbar-item">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="income.html" class="taskbar-item">
+        <span class="icon">💰</span>
+        <span>Ingresos</span>
+      </a>
+      <a href="expenses.html" class="taskbar-item active">
+        <span class="icon">🛒</span>
+        <span>Gastos</span>
+      </a>
+      <a href="debts.html" class="taskbar-item">
+        <span class="icon">📋</span>
+        <span>Deudas</span>
+      </a>
+      <a href="habits.html" class="taskbar-item">
+        <span class="icon">🎯</span>
+        <span>Habitos</span>
+      </a>
+      <a href="data.html" class="taskbar-item">
+        <span class="icon">⚙️</span>
+        <span>Datos</span>
+      </a>
+      <a href="profile.html" class="taskbar-item">
+        <span class="icon">👤</span>
+        <span>Perfil</span>
+      </a>
+    </div>
+  </nav>
+  
+  <div class="user-menu modal-hidden" id="user-menu">
+    <div class="user-menu-content">
+      <div class="user-info">
+        <span class="user-icon">👤</span>
+        <span id="user-email">usuario@email.com</span>
+      </div>
+      <a href="profile.html" class="user-menu-item">
+        <span>👤</span>
+        <span>Perfil</span>
+      </a>
+      <div class="user-menu-item" onclick="toggleTheme()">
+        <span>🌙</span>
+        <span>Cambiar tema</span>
+      </div>
+      <div class="user-menu-item" onclick="logout()">
+        <span>🚪</span>
+        <span>Cerrar sesión</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-backdrop modal-hidden" id="edit-modal-backdrop" onclick="closeEditExpenseModal(event)">
+    <div class="edit-modal" onclick="event.stopPropagation()">
+      <h3>✏️ Editar Gasto</h3>
+      <input type="hidden" id="edit-expense-id">
+      <div class="form-group">
+        <label>Categoría</label>
+        <input type="text" id="edit-expense-category" class="input" list="expense-categories" required>
+      </div>
+      <div class="form-group">
+        <label>Monto</label>
+        <input type="number" id="edit-expense-amount" class="input" step="0.01" required>
+      </div>
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" id="edit-expense-date" class="input" required>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeEditExpenseModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveExpenseEdit()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    let editingExpenseId = null;
+    
+    function initExpensesPage() {
+      const now = new Date();
+      const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      document.getElementById('expenses-period').textContent = months[now.getMonth()] + ' ' + now.getFullYear();
+      document.getElementById('expense-date').value = now.toISOString().split('T')[0];
+      
+      populateExpenseFilters();
+      populateCategoryDatalist();
+      renderExpensesList();
+      
+      document.getElementById('add-expense-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addExpenseFromPage();
+      });
+    }
+    
+    function populateExpenseFilters() {
+      const monthSelect = document.getElementById('expenses-filter-month');
+      const yearSelect = document.getElementById('expenses-filter-year');
+      const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      
+      const now = new Date();
+      for (let i = 0; i <= now.getMonth(); i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = months[i];
+        monthSelect.appendChild(opt);
+      }
+      monthSelect.value = now.getMonth();
+      
+      for (let y = now.getFullYear(); y >= now.getFullYear() - 5; y--) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+      }
+      yearSelect.value = now.getFullYear();
+    }
+    
+    function populateCategoryDatalist() {
+      const db = getDB();
+      const categories = db.categories?.expenses || ['General', 'Comida', 'Transporte', 'Ocio', 'Salud'];
+      const datalist = document.getElementById('expense-categories');
+      datalist.innerHTML = categories.map(c => `<option value="${c}">`).join('');
+    }
+    
+    function renderExpensesList() {
+      const db = getDB();
+      const expenses = db.expenses || [];
+      const monthFilter = document.getElementById('expenses-filter-month').value;
+      const yearFilter = document.getElementById('expenses-filter-year').value;
+      
+      let filtered = [...expenses];
+      
+      if (monthFilter !== 'all') {
+        filtered = filtered.filter(e => new Date(e.date).getMonth() === parseInt(monthFilter));
+      }
+      if (yearFilter !== 'all') {
+        filtered = filtered.filter(e => new Date(e.date).getFullYear() === parseInt(yearFilter));
+      }
+      
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      const total = filtered.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+      document.getElementById('total-expenses').textContent = formatCurrency(total);
+      
+      renderCategoryStats(filtered);
+      renderExpensesCards(filtered);
+    }
+    
+    function renderCategoryStats(expenses) {
+      const container = document.getElementById('category-stats');
+      const categoryMap = {};
+      
+      expenses.forEach(e => {
+        if (!categoryMap[e.category]) {
+          categoryMap[e.category] = { total: 0, count: 0 };
+        }
+        categoryMap[e.category].total += parseFloat(e.amount || 0);
+        categoryMap[e.category].count++;
+      });
+      
+      const categories = Object.keys(categoryMap).sort((a, b) => categoryMap[b].total - categoryMap[a].total);
+      
+      if (categories.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      
+      container.innerHTML = categories.slice(0, 4).map(cat => `
+        <div class="category-stat-card">
+          <div class="category-name">${cat}</div>
+          <div class="category-amount">${formatCurrency(categoryMap[cat].total)}</div>
+          <div class="category-count">${categoryMap[cat].count} transacciones</div>
+        </div>
+      `).join('');
+    }
+    
+    function renderExpensesCards(expenses) {
+      const container = document.getElementById('expenses-list-full');
+      
+      if (expenses.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🛒</div>
+            <p>No hay gastos registrados</p>
+            <p class="text-secondary">Agrega tu primer gasto arriba</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = expenses.map(item => `
+        <div class="transaction-card">
+          <div class="transaction-info">
+            <div class="transaction-source">${escapeHtml(item.category || 'General')}</div>
+            <span class="transaction-category">${escapeHtml(item.category || 'General')}</span>
+            <div class="transaction-date">${formatDate(item.date)}</div>
+          </div>
+          <div class="transaction-amount">-${formatCurrency(parseFloat(item.amount))}</div>
+          <div class="transaction-actions">
+            <button class="btn-edit" onclick="openEditExpense(${item.id})">✏️</button>
+            <button class="btn-delete" onclick="deleteExpense(${item.id})">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function addExpenseFromPage() {
+      const category = document.getElementById('expense-category').value;
+      const amount = parseFloat(document.getElementById('expense-amount').value);
+      const date = document.getElementById('expense-date').value;
+      
+      if (!category || !amount || !date) return;
+      
+      const db = getDB();
+      if (!db.expenses) db.expenses = [];
+      
+      db.expenses.push({
+        id: Date.now(),
+        category,
+        amount,
+        date
+      });
+      
+      saveDB(db);
+      document.getElementById('add-expense-form').reset();
+      document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+      
+      addXP(3);
+      renderExpensesList();
+    }
+    
+    function openEditExpense(id) {
+      const db = getDB();
+      const expense = db.expenses.find(e => e.id === id);
+      if (!expense) return;
+      
+      editingExpenseId = id;
+      document.getElementById('edit-expense-id').value = id;
+      document.getElementById('edit-expense-category').value = expense.category;
+      document.getElementById('edit-expense-amount').value = expense.amount;
+      document.getElementById('edit-expense-date').value = expense.date;
+      
+      document.getElementById('edit-modal-backdrop').classList.remove('modal-hidden');
+    }
+    
+    function closeEditExpenseModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('edit-modal-backdrop').classList.add('modal-hidden');
+      editingExpenseId = null;
+    }
+    
+    function saveExpenseEdit() {
+      const id = editingExpenseId;
+      const db = getDB();
+      const expense = db.expenses.find(e => e.id === id);
+      
+      if (expense) {
+        expense.category = document.getElementById('edit-expense-category').value;
+        expense.amount = parseFloat(document.getElementById('edit-expense-amount').value);
+        expense.date = document.getElementById('edit-expense-date').value;
+        
+        saveDB(db);
+        closeEditExpenseModal();
+        renderExpensesList();
+      }
+    }
+    
+    function deleteExpense(id) {
+      if (!confirm('¿Eliminar este gasto?')) return;
+      
+      const db = getDB();
+      db.expenses = db.expenses.filter(e => e.id !== id);
+      saveDB(db);
+      renderExpensesList();
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('es-VE', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      initTheme();
+      initExpensesPage();
+    });
+  </script>
+</body>
+</html>

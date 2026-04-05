@@ -267,7 +267,7 @@
   <!-- Windows Taskbar -->
   <nav class="taskbar">
     <div class="taskbar-right">
-      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema">🌙</button>
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema" onclick="toggleTheme()">🌙</button>
       <button class="taskbar-user" id="user-btn" title="Usuario" onclick="toggleUserMenu()">👤</button>
     </div>
     
@@ -280,9 +280,17 @@
         <span class="icon">📊</span>
         <span>Dashboard</span>
       </a>
-      <a href="converter.html" class="taskbar-item">
-        <span class="icon">💱</span>
-        <span>Conversor</span>
+      <a href="income.html" class="taskbar-item">
+        <span class="icon">💰</span>
+        <span>Ingresos</span>
+      </a>
+      <a href="expenses.html" class="taskbar-item">
+        <span class="icon">🛒</span>
+        <span>Gastos</span>
+      </a>
+      <a href="debts.html" class="taskbar-item">
+        <span class="icon">📋</span>
+        <span>Deudas</span>
       </a>
       <a href="habits.html" class="taskbar-item">
         <span class="icon">🎯</span>
@@ -291,6 +299,13 @@
       <a href="data.html" class="taskbar-item">
         <span class="icon">⚙️</span>
         <span>Datos</span>
+      </a>
+      <a href="profile.html" class="taskbar-item">
+        <span class="icon">👤</span>
+        <span>Perfil</span>
+      </a>
+    </div>
+        <span>Perfil</span>
       </a>
     </div>
     
@@ -419,19 +434,6 @@
     }
     
     document.addEventListener('DOMContentLoaded', () => {
-      var btn = document.getElementById('theme-toggle');
-      if (btn) {
-        var saved = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', saved);
-        btn.textContent = saved === 'dark' ? '☀️' : '🌙';
-        btn.addEventListener('click', function() {
-          var current = document.documentElement.getAttribute('data-theme');
-          var next = current === 'dark' ? 'light' : 'dark';
-          document.documentElement.setAttribute('data-theme', next);
-          localStorage.setItem('theme', next);
-          btn.textContent = next === 'dark' ? '☀️' : '🌙';
-        });
-      }
       initTheme();
       updateClock();
       setInterval(updateClock, 1000);

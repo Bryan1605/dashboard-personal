@@ -20,6 +20,10 @@ function calculateXPForLevel(level) {
   return level * level * LEVEL_MULTIPLIER;
 }
 
+function getXPForLevel(level) {
+  return calculateXPForLevel(level);
+}
+
 function getXPProgress(xp) {
   const level = calculateLevel(xp);
   const currentLevelXP = calculateXPForLevel(level);
@@ -460,14 +464,29 @@ function initTheme() {
   const saved = localStorage.getItem('theme') || 'light';
   document.documentElement.setAttribute('data-theme', saved);
   btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  console.log('toggleTheme called');
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
   
-  btn.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-    btn.textContent = next === 'dark' ? '☀️' : '🌙';
-  });
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+  
+  closeUserMenu();
+}
+
+function closeUserMenu() {
+  const menu = document.getElementById('user-menu');
+  if (menu) menu.classList.add('modal-hidden');
+}
+
+function toggleUserMenu() {
+  const menu = document.getElementById('user-menu');
+  if (menu) menu.classList.toggle('modal-hidden');
 }
 
 // ==========================================
@@ -608,10 +627,23 @@ function calculateStreak(history) {
 
 function updateDashboard() {
   const db = getDB();
-
-  // Calculate totals (with fallback for old data)
-  const totalIncome = (db.income || []).reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
-  const totalExpenses = (db.expenses || []).reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+  
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
+  const filterByMonth = (items) => {
+    return (items || []).filter(item => {
+      const d = new Date(item.date);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+  };
+  
+  const monthExpenses = filterByMonth(db.expenses);
+  const monthIncome = filterByMonth(db.income);
+  
+  const totalIncome = monthIncome.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+  const totalExpenses = monthExpenses.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
   const totalDebts = (db.debts || []).reduce((sum, i) => sum + parseFloat(i.amountToPay || 0), 0);
   const totalSavings = (db.savings || []).reduce((sum, s) => sum + parseFloat(s.currentAmount || 0), 0);
   const totalSavingsTarget = (db.savings || []).reduce((sum, s) => sum + parseFloat(s.targetAmount || 0), 0);
@@ -627,9 +659,9 @@ function updateDashboard() {
   if (el('total-savings-target')) el('total-savings-target').textContent = formatCurrency(totalSavingsTarget);
   if (el('total-loans')) el('total-loans').textContent = formatCurrency(totalLoans - totalLoansReturned);
 
-  // Update charts
+  // Update charts with monthly data
   updateBarChart(totalIncome, totalExpenses);
-  updateDonutChart(db.expenses);
+  updateDonutChart(monthExpenses);
 
   // Update habits summary
   const activeHabits = db.habits.filter(h => !h.archived);
@@ -640,6 +672,8 @@ function updateDashboard() {
   renderTransactionLists();
   renderHabitMiniList();
   renderDashboardXPWidget();
+  updateDashboardHeader();
+  renderRecentNotesCards();
 }
 
 // ==========================================
@@ -678,21 +712,40 @@ function updateDonutChart(expenses) {
   const container = document.getElementById('donut-chart');
   if (!container) return;
 
+  const categoryColors = {
+    'General': '#6366F1',
+    'Comida': '#10B981',
+    'Transporte': '#F59E0B',
+    'Ocio': '#EC4899',
+    'Salud': '#EF4444',
+    'Otro': '#8B5CF6',
+    'Educacion': '#14B8A6',
+    'Servicios': '#F97316',
+    'Ropa': '#06B6D4'
+  };
+  
+  const defaultColors = ['#6366F1', '#10B981', '#F59E0B', '#EC4899', '#EF4444', '#8B5CF6', '#14B8A6', '#F97316', '#06B6D4'];
+  
+  const getColor = (category) => categoryColors[category] || defaultColors[Object.keys(categoryColors).length % defaultColors.length];
+  
+  const db = getDB();
+  const allCategories = db.categories?.expenses || ['General', 'Comida', 'Transporte', 'Ocio', 'Salud'];
+  
   const map = {};
-  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899'];
+  allCategories.forEach(cat => map[cat] = 0);
   
   expenses.forEach(e => {
     map[e.category] = (map[e.category] || 0) + parseFloat(e.amount);
   });
 
-  const labels = Object.keys(map);
-  const values = Object.values(map);
+  const labels = Object.keys(map).filter(k => map[k] > 0);
+  const values = labels.map(k => map[k]);
   const total = values.reduce((a, b) => a + b, 0);
 
   if (labels.length === 0) {
     container.innerHTML = `
       <div class="donut-chart" style="background: var(--border);"></div>
-      <div class="donut-legend"><p class="text-secondary">Sin datos</p></div>
+      <div class="donut-legend"><p class="text-secondary">Sin datos este mes</p></div>
     `;
     return;
   }
@@ -701,9 +754,10 @@ function updateDonutChart(expenses) {
   let currentDeg = 0;
   let gradientParts = [];
   
-  values.forEach((v, i) => {
+  labels.forEach((label, i) => {
+    const v = map[label];
     const deg = (v / total) * 360;
-    gradientParts.push(`${colors[i % colors.length]} ${currentDeg}deg ${currentDeg + deg}deg`);
+    gradientParts.push(`${getColor(label)} ${currentDeg}deg ${currentDeg + deg}deg`);
     currentDeg += deg;
   });
 
@@ -716,9 +770,9 @@ function updateDonutChart(expenses) {
         </div>
       </div>
       <div class="donut-legend">
-        ${labels.map((label, i) => `
+        ${labels.map(label => `
           <div class="legend-item">
-            <span class="legend-color" style="background: ${colors[i % colors.length]}"></span>
+            <span class="legend-color" style="background: ${getColor(label)}"></span>
             <span>${label}: ${formatCurrency(map[label])}</span>
           </div>
         `).join('')}
@@ -839,34 +893,32 @@ function renderTransactionLists() {
 
 function renderHabitMiniList() {
   const container = document.getElementById('habit-mini-list');
-  if (!container) return;
-
+  const summaryEl = document.getElementById('habit-summary');
+  const circleEl = document.getElementById('habits-progress-circle');
+  
   const db = getDB();
   const habits = db.habits.filter(h => !h.archived);
+  const completed = habits.filter(h => h.completed).length;
+  const total = habits.length;
+  const percentage = total > 0 ? (completed / total) * 100 : 0;
+
+  // Update progress text
+  if (summaryEl) summaryEl.textContent = `${completed}/${total}`;
+  
+  // Update progress circle
+  if (circleEl) circleEl.setAttribute('stroke-dasharray', `${percentage}, 100`);
 
   if (habits.length === 0) {
-    container.innerHTML = '<p class="text-secondary text-center">No hay hábitos activos</p>';
+    if (container) container.innerHTML = '<p class="text-secondary" style="font-size: 0.875rem;">No hay hábitos activos. <a href="habits.html" style="color: var(--primary);">Crear</a></p>';
     return;
   }
 
-  container.innerHTML = habits.map(h => {
-    const streak = calculateStreak(h.history);
-    return `
-      <div class="habit-card ${h.completed ? 'completed' : ''}">
-        <div class="habit-header">
-          <input type="checkbox" class="habit-checkbox" ${h.completed ? 'checked' : ''} 
-                 onchange="toggleHabit(${h.id})">
-          <div class="habit-content">
-            <div class="habit-name">${h.name}</div>
-            <div class="habit-meta">
-              <span class="habit-tag">${h.category}</span>
-              ${streak > 0 ? `<span class="habit-streak">🔥 ${streak}</span>` : ''}
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  container.innerHTML = habits.slice(0, 6).map(h => `
+    <div class="habit-mini-item ${h.completed ? 'completed' : ''}" onclick="toggleHabit(${h.id})">
+      <div class="habit-mini-checkbox">${h.completed ? '✓' : ''}</div>
+      <span>${h.name}</span>
+    </div>
+  `).join('');
 }
 
 // ==========================================
@@ -1163,30 +1215,22 @@ function deleteHabit(id) {
 }
 
 // ==========================================
-// BULLET JOURNAL / TASKS
+// BULLET JOURNAL / TASKS (NEW SYSTEM)
 // ==========================================
 
+const TASK_XP = { task: 10, event: 5, activity: 5 };
+
 function addTask() {
-  console.log('addTask called');
   const db = getDB();
-  console.log('DB:', db);
-  console.log('tasks array:', db.tasks);
-  
   const title = document.getElementById('task-title').value;
   const date = document.getElementById('task-date').value;
   const category = document.getElementById('task-category').value;
   const type = document.getElementById('task-type').value;
   const notes = document.getElementById('task-notes').value;
   
-  console.log('Form values:', { title, date, category, type, notes });
-  
   if (!title || !date) return alert('Completa los campos requeridos');
   
-  // Ensure tasks array exists
-  if (!db.tasks) {
-    console.log('Initializing tasks array');
-    db.tasks = [];
-  }
+  if (!db.tasks) db.tasks = [];
   
   db.tasks.push({
     id: Date.now(),
@@ -1199,18 +1243,29 @@ function addTask() {
     createdAt: new Date().toISOString()
   });
   
-  console.log('Tasks after push:', db.tasks);
+  // Award XP for creating task/activity/event
+  const xpGain = TASK_XP[type] || 5;
+  addXP(xpGain);
   
   saveDB(db);
   document.getElementById('task-form').reset();
   renderTasks();
+  showXPGain(xpGain);
 }
 
 function toggleTask(id) {
   const db = getDB();
   const task = db.tasks.find(t => t.id === id);
   if (task) {
+    const wasCompleted = task.completed;
     task.completed = !task.completed;
+    
+    // Award XP when completing a task (not when uncompleting)
+    if (task.completed && !wasCompleted && task.type === 'task') {
+      addXP(TASK_XP.task);
+      showXPGain(TASK_XP.task);
+    }
+    
     saveDB(db);
     renderTasks();
   }
@@ -1222,6 +1277,363 @@ function deleteTask(id) {
   db.tasks = db.tasks.filter(t => t.id !== id);
   saveDB(db);
   renderTasks();
+}
+
+function renderTasks() {
+  const container = document.getElementById('task-checklist');
+  if (!container) return;
+  
+  const db = getDB();
+  const tasks = db.tasks || [];
+  
+  if (tasks.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📝</div>
+        <p>No hay tareas</p>
+        <p class="text-secondary">Agrega una tarea abajo</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Sort by date
+  const sortedTasks = [...tasks].sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Group by date
+  const groupedTasks = {};
+  sortedTasks.forEach(task => {
+    if (!groupedTasks[task.date]) groupedTasks[task.date] = [];
+    groupedTasks[task.date].push(task);
+  });
+  
+  const today = new Date().toISOString().split('T')[0];
+  const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  
+  container.innerHTML = Object.entries(groupedTasks).map(([date, dateTasks]) => {
+    const d = new Date(date);
+    const isToday = date === today;
+    const isPast = date < today;
+    const dayName = dayNames[d.getDay()];
+    const monthDay = monthNames[d.getMonth()] + ' ' + d.getDate();
+    
+    return `
+      <div class="task-date-group ${isToday ? 'today-group' : ''} ${isPast && !isToday ? 'past-group' : ''}">
+        <div class="task-date-header">
+          <span class="task-day-name">${dayName}</span>
+          <span class="task-month-day">${monthDay}</span>
+          ${isToday ? '<span class="task-today-badge">HOY</span>' : ''}
+        </div>
+        <div class="task-list">
+          ${dateTasks.map(task => {
+            const typeIcons = { task: '◻', event: '🔵', activity: '🟢' };
+            const typeColors = { task: 'var(--primary)', event: 'var(--info)', activity: 'var(--success)' };
+            const typeLabels = { task: 'Tarea', event: 'Evento', activity: 'Actividad' };
+            return `
+              <div class="task-item ${task.completed ? 'completed' : ''}">
+                <button class="task-check" onclick="toggleTask(${task.id})">
+                  ${task.completed ? '✓' : typeIcons[task.type]}
+                </button>
+                <div class="task-content">
+                  <span class="task-title" style="${task.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task.title}</span>
+                  <span class="task-category" style="background: ${typeColors[task.type]}20; color: ${typeColors[task.type]};">${typeLabels[task.type]}</span>
+                  ${task.notes ? `<span class="task-notes">${task.notes}</span>` : ''}
+                </div>
+                <button class="btn-delete" onclick="deleteTask(${task.id})" title="Eliminar">x</button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==========================================
+// XP SYSTEM EXPANDED
+// ==========================================
+
+const XP_ACTIONS = {
+  habit: 10,
+  task: 10,
+  event: 5,
+  activity: 5,
+  note: 2,
+  streak_bonus: 5,
+  goal_completed: 50
+};
+
+function addXP(amount, reason = '') {
+  const db = getDB();
+  if (!db.userStats) {
+    db.userStats = { xp: 0, totalCompleted: 0, longestStreak: 0, unlockedAchievements: [] };
+  }
+  db.userStats.xp = (db.userStats.xp || 0) + amount;
+  
+  // Check for streak bonus (3+ habits completed today)
+  const today = new Date().toISOString().split('T')[0];
+  const habitsCompletedToday = (db.habits || []).filter(h => h.history && h.history.includes(today)).length;
+  if (habitsCompletedToday >= 3 && !db.userStats.dailyBonus) {
+    db.userStats.xp += XP_ACTIONS.streak_bonus;
+    db.userStats.dailyBonus = true;
+  }
+  
+  saveDB(db);
+  checkAchievements();
+  
+  // Update dashboard if on index page
+  if (typeof renderDashboardXPWidget === 'function') {
+    renderDashboardXPWidget();
+  }
+}
+
+function showXPGain(amount) {
+  const notification = document.createElement('div');
+  notification.className = 'xp-notification';
+  notification.innerHTML = `+${amount} XP`;
+  document.body.appendChild(notification);
+  setTimeout(() => notification.remove(), 2000);
+}
+
+// ==========================================
+// USER PROFILE SYSTEM
+// ==========================================
+
+function getProfile() {
+  const db = getDB();
+  return db.userProfile || {
+    avatar: '',
+    banner: 'linear-gradient(135deg, #667eea, #764ba2)',
+    username: 'Usuario',
+    bio: '',
+    goals: [],
+    theme: localStorage.getItem('theme') || 'light'
+  };
+}
+
+function saveProfile(profile) {
+  const db = getDB();
+  db.userProfile = profile;
+  saveDB(db);
+}
+
+function updateProfile(field, value) {
+  const profile = getProfile();
+  profile[field] = value;
+  saveProfile(profile);
+  if (field === 'theme') {
+    document.documentElement.setAttribute('data-theme', value);
+    localStorage.setItem('theme', value);
+  }
+}
+
+function renderProfile() {
+  const profile = getProfile();
+  const db = getDB();
+  const userStats = db.userStats || { xp: 0, totalCompleted: 0, longestStreak: 0, unlockedAchievements: [] };
+  const progress = getXPProgress(userStats.xp);
+  
+  // Render profile header
+  const headerContainer = document.getElementById('profile-header');
+  if (headerContainer) {
+    headerContainer.style.background = profile.banner || 'linear-gradient(135deg, #667eea, #764ba2)';
+  }
+  
+  const usernameEl = document.getElementById('profile-username');
+  if (usernameEl) usernameEl.textContent = '@' + (profile.username || 'usuario');
+  
+  const nameEl = document.getElementById('profile-name');
+  if (nameEl) nameEl.textContent = profile.username || 'Usuario';
+  
+  const bioEl = document.getElementById('profile-bio');
+  if (bioEl) bioEl.textContent = profile.bio || 'Sin descripción';
+  
+  const avatarEl = document.getElementById('profile-avatar');
+  if (avatarEl && profile.avatar) {
+    avatarEl.src = profile.avatar;
+    avatarEl.style.display = 'block';
+  }
+  
+  // Render XP stats
+  const levelEl = document.getElementById('profile-level');
+  if (levelEl) levelEl.textContent = `Nivel ${progress.level}`;
+  
+  const xpEl = document.getElementById('profile-xp');
+  if (xpEl) xpEl.textContent = `${userStats.xp} XP`;
+  
+  // Render goals
+  renderGoals();
+  
+  // Render notes
+  renderNotes();
+}
+
+function renderGoals() {
+  const container = document.getElementById('goals-list');
+  if (!container) return;
+  
+  const profile = getProfile();
+  const goals = profile.goals || [];
+  
+  if (goals.length === 0) {
+    container.innerHTML = '<p class="text-secondary" style="font-size: 0.875rem;">Sin metas aún</p>';
+    return;
+  }
+  
+  const completed = goals.filter(g => g.completed).length;
+  container.innerHTML = `
+    <div class="goals-progress">
+      <span>🎯 ${completed}/${goals.length} completadas</span>
+    </div>
+    <div class="goals-list">
+      ${goals.map(g => `
+        <div class="goal-item ${g.completed ? 'completed' : ''}">
+          <button class="goal-check" onclick="toggleGoal(${g.id})">
+            ${g.completed ? '✓' : '○'}
+          </button>
+          <span class="goal-title">${g.title}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function addGoal(title) {
+  if (!title) return;
+  const profile = getProfile();
+  if (!profile.goals) profile.goals = [];
+  profile.goals.push({ id: Date.now(), title, completed: false });
+  saveProfile(profile);
+  renderGoals();
+}
+
+function toggleGoal(id) {
+  const profile = getProfile();
+  const goal = profile.goals.find(g => g.id === id);
+  if (goal) {
+    const wasCompleted = goal.completed;
+    goal.completed = !goal.completed;
+    saveProfile(profile);
+    if (goal.completed && !wasCompleted) {
+      addXP(XP_ACTIONS.goal_completed, 'Meta completada');
+      showXPGain(XP_ACTIONS.goal_completed);
+    }
+    renderGoals();
+  }
+}
+
+// ==========================================
+// NOTES SYSTEM (Twitter/X style)
+// ==========================================
+
+function addNote() {
+  const content = document.getElementById('note-content');
+  if (!content || !content.value.trim()) return alert('Escribe algo...');
+  
+  const db = getDB();
+  if (!db.notes) db.notes = [];
+  
+  db.notes.unshift({
+    id: Date.now(),
+    content: content.value.trim(),
+    createdAt: new Date().toISOString(),
+    likes: 0
+  });
+  
+  // XP for creating note
+  const xpGain = content.value.length > 50 ? 3 : XP_ACTIONS.note;
+  addXP(xpGain);
+  
+  saveDB(db);
+  content.value = '';
+  renderNotes();
+}
+
+function likeNote(id) {
+  const db = getDB();
+  const note = db.notes.find(n => n.id === id);
+  if (note) {
+    note.likes = (note.likes || 0) + 1;
+    saveDB(db);
+    renderNotes();
+  }
+}
+
+function deleteNote(id) {
+  if (!confirm('¿Eliminar esta nota?')) return;
+  const db = getDB();
+  db.notes = db.notes.filter(n => n.id !== id);
+  saveDB(db);
+  renderNotes();
+}
+
+function renderNotes() {
+  const container = document.getElementById('notes-feed');
+  if (!container) return;
+  
+  const db = getDB();
+  const notes = db.notes || [];
+  
+  if (notes.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="padding: 20px;">
+        <p class="text-secondary">Sin notas aún</p>
+        <p style="font-size: 0.75rem;">Comparte tus pensamientos abajo</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = notes.map(note => {
+    const date = new Date(note.createdAt);
+    const formattedDate = date.toLocaleDateString('es-ES', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    return `
+      <div class="note-item">
+        <div class="note-content">${note.content}</div>
+        <div class="note-meta">
+          <span class="note-date">📅 ${formattedDate}</span>
+          <div class="note-actions">
+            <button class="note-like" onclick="likeNote(${note.id})">
+              ❤️ ${note.likes || 0}
+            </button>
+            <button class="note-delete" onclick="deleteNote(${note.id})">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Theme toggle for profile
+function toggleProfileTheme() {
+  const profile = getProfile();
+  const newTheme = profile.theme === 'dark' ? 'light' : 'dark';
+  updateProfile('theme', newTheme);
+  
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+}
+
+// Avatar upload
+function handleAvatarUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    updateProfile('avatar', e.target.result);
+    renderProfile();
+  };
+  reader.readAsDataURL(input.files[0]);
 }
 
 function renderTasks() {
@@ -1593,6 +2005,66 @@ function renderDashboardXPWidget() {
 }
 
 // ==========================================
+// DASHBOARD HEADER XP
+// ==========================================
+
+function updateDashboardHeader() {
+  const db = getDB();
+  const userStats = db.userStats || { xp: 0 };
+  const progress = getXPProgress(userStats.xp);
+  const currentLevelXP = progress.currentXP;
+  const nextLevelXP = progress.nextXP;
+  const neededXP = nextLevelXP - currentLevelXP;
+  
+  // Update header badge
+  const levelEl = document.getElementById('header-level');
+  const xpFillEl = document.getElementById('header-xp-fill');
+  const xpCurrentEl = document.getElementById('header-xp-current');
+  const xpNextEl = document.getElementById('header-xp-next');
+  const dateEl = document.getElementById('current-date-display');
+  
+  if (levelEl) levelEl.textContent = progress.level;
+  if (xpFillEl) xpFillEl.style.width = Math.min(progress.progress, 100) + '%';
+  if (xpCurrentEl) xpCurrentEl.textContent = currentLevelXP;
+  if (xpNextEl) xpNextEl.textContent = neededXP;
+  if (dateEl) {
+    const now = new Date();
+    dateEl.textContent = now.toLocaleDateString('es-VE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+}
+
+// ==========================================
+// RECENT NOTES CARDS
+// ==========================================
+
+function renderRecentNotesCards() {
+  const container = document.getElementById('notes-cards');
+  const section = document.getElementById('recent-notes-section');
+  if (!container || !section) return;
+  
+  const db = getDB();
+  const notes = db.notes || [];
+  
+  if (notes.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  const recentNotes = notes.slice(-6).reverse();
+  
+  container.innerHTML = recentNotes.map(note => `
+    <div class="note-card" onclick="window.location.href='profile.html'">
+      <div class="note-card-header">
+        <span class="note-card-mood">${note.mood || '😊'}</span>
+        <span class="note-card-date">${formatNoteDate(note.createdAt)}</span>
+      </div>
+      <div class="note-card-content">${escapeHtml(note.content)}</div>
+    </div>
+  `).join('');
+}
+
+// ==========================================
 // XP DISPLAY
 // ==========================================
 
@@ -1672,6 +2144,15 @@ document.addEventListener('DOMContentLoaded', () => {
   migrateData();
   populateCategorySelects();
   renderCategoryLists();
+  
+  // User menu click outside to close
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('user-menu');
+    const btn = document.getElementById('user-btn');
+    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.classList.add('modal-hidden');
+    }
+  });
 
   // Dashboard page
   if (document.getElementById('total-income')) {

@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Perfil - Dashboard Personal</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .profile-page {
+      padding-bottom: 80px;
+    }
+    
+    .profile-header {
+      position: relative;
+      margin-bottom: 24px;
+    }
+    
+    .profile-banner {
+      height: 120px;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+    
+    .profile-avatar-section {
+      position: absolute;
+      top: 80px;
+      left: 16px;
+    }
+    
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 4px solid var(--bg);
+      background: var(--card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .profile-avatar-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      color: white;
+      font-size: 0.75rem;
+    }
+    
+    .profile-avatar:hover .profile-avatar-overlay {
+      opacity: 1;
+    }
+    
+    .profile-edit-btn {
+      position: absolute;
+      top: 140px;
+      right: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .profile-edit-btn:hover {
+      background: var(--input-bg);
+    }
+    
+    .profile-info {
+      margin-top: 60px;
+      padding: 0 16px;
+    }
+    
+    .profile-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    
+    .profile-username {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 12px;
+    }
+    
+    .profile-bio {
+      color: var(--text);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    
+    .profile-meta-items {
+      display: flex;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+    
+    .profile-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .profile-stats {
+      display: flex;
+      gap: 24px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    
+    .profile-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .profile-stat-value {
+      font-weight: 700;
+      color: var(--text);
+    }
+    
+    .profile-stat-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    .profile-xp-bar {
+      background: var(--input-bg);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .profile-xp-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .profile-xp-label {
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .profile-xp-value {
+      color: var(--primary);
+      font-weight: 700;
+    }
+    
+    .profile-xp-progress {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .profile-xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--purple));
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    
+    .profile-section {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .profile-section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .notes-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .note-item {
+      padding: 12px;
+      background: var(--input-bg);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--primary);
+    }
+    
+    .note-content {
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    
+    .note-date {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .note-delete {
+      float: right;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    
+    .note-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .note-mood {
+      font-size: 1.25rem;
+    }
+    
+    .note-date {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .goals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .goal-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--input-bg);
+      border-radius: var(--radius-sm);
+    }
+    
+    .goal-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .goal-checkbox.completed {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    .goal-text {
+      flex: 1;
+      color: var(--text);
+    }
+    
+    .goal-text.completed {
+      text-decoration: line-through;
+      color: var(--text-secondary);
+    }
+    
+    .goal-delete {
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    
+    .add-note-form, .add-goal-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .add-note-form textarea, .add-goal-form input {
+      width: 100%;
+      padding: 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.875rem;
+      resize: vertical;
+    }
+    
+    .add-note-form textarea:focus, .add-goal-form input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .mood-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .mood-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    .mood-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .mood-btn {
+      width: 36px;
+      height: 36px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      background: var(--input-bg);
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .mood-btn:hover {
+      transform: scale(1.1);
+      border-color: var(--primary);
+    }
+    
+    .mood-btn.selected {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+    
+    .taskbar-user {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    
+    .taskbar-user:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .user-menu {
+      position: fixed;
+      bottom: 70px;
+      right: 10px;
+      background: var(--card);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 200px;
+      z-index: 1001;
+      overflow: hidden;
+    }
+    
+    .user-menu.modal-hidden {
+      display: none !important;
+    }
+    
+    .user-menu-content {
+      padding: 8px 0;
+    }
+    
+    .user-info {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    
+    .user-icon {
+      font-size: 1.5rem;
+    }
+    
+    #user-email {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    
+    .user-menu-item:hover {
+      background: var(--input-bg);
+    }
+    
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1002;
+    }
+    
+    .modal-backdrop.modal-hidden {
+      display: none;
+    }
+    
+    .edit-profile-modal {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .edit-profile-modal h2 {
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-save {
+      background: var(--primary);
+      color: white;
+      border: none;
+    }
+    
+    .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container profile-page">
+    <div class="profile-header">
+      <div class="profile-banner"></div>
+      <div class="profile-avatar-section">
+        <div class="profile-avatar" onclick="document.getElementById('avatar-input').click()">
+          <span id="profile-avatar-display">👤</span>
+          <img id="profile-avatar-img" style="display:none">
+          <div class="profile-avatar-overlay">Cambiar</div>
+        </div>
+        <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+      </div>
+      <button class="profile-edit-btn" onclick="openEditProfileModal()">Editar perfil</button>
+    </div>
+    
+    <div class="profile-info">
+      <div class="profile-name" id="profile-name-display">Usuario</div>
+      <div class="profile-username" id="profile-username-display">@usuario</div>
+      <div class="profile-bio" id="profile-bio-display">Bienvenido a mi dashboard personal</div>
+      
+      <div class="profile-meta-items">
+        <div class="profile-meta-item">
+          <span>📅</span>
+          <span>Se unió en 2026</span>
+        </div>
+        <div class="profile-meta-item">
+          <span>📍</span>
+          <span>Venezuela</span>
+        </div>
+      </div>
+      
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <span class="profile-stat-value" id="xp-level">1</span>
+          <span class="profile-stat-label">Nivel</span>
+        </div>
+        <div class="profile-stat">
+          <span class="profile-stat-value" id="xp-total">0</span>
+          <span class="profile-stat-label">XP Total</span>
+        </div>
+        <div class="profile-stat">
+          <span class="profile-stat-value" id="streak-days">0</span>
+          <span class="profile-stat-label">Días de racha</span>
+        </div>
+      </div>
+      
+      <div class="profile-xp-bar">
+        <div class="profile-xp-header">
+          <span class="profile-xp-label">Progreso al siguiente nivel</span>
+          <span class="profile-xp-value"><span id="xp-current">0</span> / <span id="xp-next">100</span> XP</span>
+        </div>
+        <div class="profile-xp-progress">
+          <div class="profile-xp-fill" id="xp-fill" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="profile-section">
+      <div class="profile-section-title">
+        <span>📝</span> Notas
+      </div>
+      <div class="notes-feed" id="notes-feed">
+        <div class="empty-state">
+          <div class="empty-state-icon">📝</div>
+          <p>No hay notas aún</p>
+        </div>
+      </div>
+      <div class="add-note-form">
+        <div class="mood-selector">
+          <span class="mood-label">Como te sientes?</span>
+          <div class="mood-options">
+            <button type="button" class="mood-btn" data-mood="😊" onclick="selectMood(this)">😊</button>
+            <button type="button" class="mood-btn" data-mood="😐" onclick="selectMood(this)">😐</button>
+            <button type="button" class="mood-btn" data-mood="😢" onclick="selectMood(this)">😢</button>
+            <button type="button" class="mood-btn" data-mood="😡" onclick="selectMood(this)">😡</button>
+            <button type="button" class="mood-btn" data-mood="😴" onclick="selectMood(this)">😴</button>
+            <button type="button" class="mood-btn" data-mood="😎" onclick="selectMood(this)">😎</button>
+            <button type="button" class="mood-btn" data-mood="🤩" onclick="selectMood(this)">🤩</button>
+            <button type="button" class="mood-btn" data-mood="🥰" onclick="selectMood(this)">🥰</button>
+          </div>
+        </div>
+        <textarea id="note-input" placeholder="Escribe una nota..." rows="3"></textarea>
+        <button class="btn-primary" onclick="addNote()">Publicar nota</button>
+      </div>
+    </div>
+    
+    <div class="profile-section">
+      <div class="profile-section-title">
+        <span>🎯</span> Metas
+      </div>
+      <div class="goals-list" id="goals-list">
+        <div class="empty-state">
+          <div class="empty-state-icon">🎯</div>
+          <p>No hay metas aún</p>
+        </div>
+      </div>
+      <div class="add-goal-form">
+        <input type="text" id="goal-input" placeholder="Nueva meta...">
+        <button class="btn-primary" onclick="addGoal()">Agregar meta</button>
+      </div>
+    </div>
+  </div>
+  
+  <nav class="taskbar">
+    <div class="taskbar-right">
+      <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema" onclick="toggleTheme()">🌙</button>
+      <button class="taskbar-user" id="user-btn" title="Usuario" onclick="toggleUserMenu()">👤</button>
+    </div>
+    
+    <div class="taskbar-center">
+      <a href="home.html" class="taskbar-item">
+        <span class="icon">🏠</span>
+        <span>Inicio</span>
+      </a>
+      <a href="index.html" class="taskbar-item">
+        <span class="icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="income.html" class="taskbar-item">
+        <span class="icon">💰</span>
+        <span>Ingresos</span>
+      </a>
+      <a href="expenses.html" class="taskbar-item">
+        <span class="icon">🛒</span>
+        <span>Gastos</span>
+      </a>
+      <a href="debts.html" class="taskbar-item">
+        <span class="icon">📋</span>
+        <span>Deudas</span>
+      </a>
+      <a href="habits.html" class="taskbar-item">
+        <span class="icon">🎯</span>
+        <span>Habitos</span>
+      </a>
+      <a href="data.html" class="taskbar-item">
+        <span class="icon">⚙️</span>
+        <span>Datos</span>
+      </a>
+      <a href="profile.html" class="taskbar-item active">
+        <span class="icon">👤</span>
+        <span>Perfil</span>
+      </a>
+    </div>
+        <span class="icon">⚙️</span>
+        <span>Datos</span>
+      </a>
+      <a href="profile.html" class="taskbar-item active">
+        <span class="icon">👤</span>
+        <span>Perfil</span>
+      </a>
+    </div>
+  </nav>
+  
+  <div class="user-menu modal-hidden" id="user-menu">
+    <div class="user-menu-content">
+      <div class="user-info">
+        <span class="user-icon">👤</span>
+        <span id="user-email">usuario@email.com</span>
+      </div>
+      <a href="profile.html" class="user-menu-item">
+        <span>👤</span>
+        <span>Perfil</span>
+      </a>
+      <div class="user-menu-item" onclick="toggleTheme()">
+        <span>🌙</span>
+        <span>Cambiar tema</span>
+      </div>
+      <div class="user-menu-item" onclick="logout()">
+        <span>🚪</span>
+        <span>Cerrar sesión</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-backdrop modal-hidden" id="edit-modal-backdrop" onclick="closeEditProfileModal(event)">
+    <div class="edit-profile-modal" onclick="event.stopPropagation()">
+      <h2>Editar Perfil</h2>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="edit-name" placeholder="Tu nombre">
+      </div>
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="edit-username" placeholder="@usuario">
+      </div>
+      <div class="form-group">
+        <label>Bio</label>
+        <textarea id="edit-bio" placeholder="Cuéntanos sobre ti..."></textarea>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeEditProfileModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveProfile()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    function initProfile() {
+      const db = getDB();
+      
+      if (db.profile) {
+        document.getElementById('profile-name-display').textContent = db.profile.name || 'Usuario';
+        document.getElementById('profile-username-display').textContent = db.profile.username || '@usuario';
+        document.getElementById('profile-bio-display').textContent = db.profile.bio || 'Bienvenido a mi dashboard personal';
+        
+        if (db.profile.avatar) {
+          document.getElementById('profile-avatar-display').style.display = 'none';
+          const img = document.getElementById('profile-avatar-img');
+          img.src = db.profile.avatar;
+          img.style.display = 'block';
+        }
+        
+        document.getElementById('edit-name').value = db.profile.name || '';
+        document.getElementById('edit-username').value = db.profile.username || '';
+        document.getElementById('edit-bio').value = db.profile.bio || '';
+      }
+      
+      updateXPDisplay();
+      renderNotes();
+      renderGoals();
+    }
+    
+    function updateXPDisplay() {
+      const db = getDB();
+      const xp = db.xp || 0;
+      const level = calculateLevel(xp);
+      const xpForLevel = getXPForLevel(level);
+      const xpForNextLevel = getXPForLevel(level + 1);
+      const currentXP = xp - xpForLevel;
+      const neededXP = xpForNextLevel - xpForLevel;
+      const progress = Math.min((currentXP / neededXP) * 100, 100);
+      
+      document.getElementById('xp-level').textContent = level;
+      document.getElementById('xp-total').textContent = xp;
+      document.getElementById('xp-current').textContent = currentXP;
+      document.getElementById('xp-next').textContent = neededXP;
+      document.getElementById('xp-fill').style.width = progress + '%';
+      
+      const streak = calculateStreak(db.habits || []);
+      document.getElementById('streak-days').textContent = streak;
+    }
+    
+    function renderNotes() {
+      const db = getDB();
+      const notes = db.notes || [];
+      const container = document.getElementById('notes-feed');
+      
+      if (notes.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <p>No hay notas aún</p>
+          </div>
+        `;
+        return;
+      }
+      
+      const sortedNotes = [...notes].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      container.innerHTML = sortedNotes.map(note => `
+        <div class="note-item">
+          <span class="note-delete" onclick="deleteNote(${note.id})">✕</span>
+          <div class="note-header">
+            <span class="note-mood">${note.mood || '😊'}</span>
+            <span class="note-date">${formatNoteDate(note.createdAt)}</span>
+          </div>
+          <div class="note-content">${escapeHtml(note.content)}</div>
+        </div>
+      `).join('');
+    }
+    
+    let selectedMood = '😊';
+    
+    function selectMood(btn) {
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedMood = btn.dataset.mood;
+    }
+    
+    function addNote() {
+      const input = document.getElementById('note-input');
+      const content = input.value.trim();
+      
+      if (!content) return alert('Escribe algo en la nota');
+      
+      const db = getDB();
+      if (!db.notes) db.notes = [];
+      
+      db.notes.push({
+        id: Date.now(),
+        content,
+        mood: selectedMood,
+        createdAt: new Date().toISOString()
+      });
+      
+      saveDB(db);
+      input.value = '';
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+      selectedMood = '😊';
+      renderNotes();
+    }
+    
+    function deleteNote(id) {
+      if (!confirm('¿Eliminar esta nota?')) return;
+      
+      const db = getDB();
+      db.notes = db.notes.filter(n => n.id !== id);
+      saveDB(db);
+      renderNotes();
+    }
+    
+    function renderGoals() {
+      const db = getDB();
+      const goals = db.goals || [];
+      const container = document.getElementById('goals-list');
+      
+      if (goals.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🎯</div>
+            <p>No hay metas aún</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = goals.map(goal => `
+        <div class="goal-item">
+          <div class="goal-checkbox ${goal.completed ? 'completed' : ''}" onclick="toggleGoal(${goal.id})">
+            ${goal.completed ? '✓' : ''}
+          </div>
+          <div class="goal-text ${goal.completed ? 'completed' : ''}">${escapeHtml(goal.text)}</div>
+          <span class="goal-delete" onclick="deleteGoal(${goal.id})">✕</span>
+        </div>
+      `).join('');
+    }
+    
+    function addGoal() {
+      const input = document.getElementById('goal-input');
+      const text = input.value.trim();
+      
+      if (!text) return alert('Escribe una meta');
+      
+      const db = getDB();
+      if (!db.goals) db.goals = [];
+      
+      db.goals.push({
+        id: Date.now(),
+        text,
+        completed: false,
+        createdAt: new Date().toISOString()
+      });
+      
+      saveDB(db);
+      input.value = '';
+      renderGoals();
+    }
+    
+    function toggleGoal(id) {
+      const db = getDB();
+      const goal = db.goals.find(g => g.id === id);
+      if (goal) {
+        goal.completed = !goal.completed;
+        saveDB(db);
+        renderGoals();
+      }
+    }
+    
+    function deleteGoal(id) {
+      if (!confirm('¿Eliminar esta meta?')) return;
+      
+      const db = getDB();
+      db.goals = db.goals.filter(g => g.id !== id);
+      saveDB(db);
+      renderGoals();
+    }
+    
+    function openEditProfileModal() {
+      document.getElementById('edit-modal-backdrop').classList.remove('modal-hidden');
+    }
+    
+    function closeEditProfileModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('edit-modal-backdrop').classList.add('modal-hidden');
+    }
+    
+    function saveProfile() {
+      const db = getDB();
+      if (!db.profile) db.profile = {};
+      
+      db.profile.name = document.getElementById('edit-name').value;
+      db.profile.username = document.getElementById('edit-username').value;
+      db.profile.bio = document.getElementById('edit-bio').value;
+      
+      saveDB(db);
+      closeEditProfileModal();
+      initProfile();
+    }
+    
+    function handleAvatarUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const db = getDB();
+        if (!db.profile) db.profile = {};
+        db.profile.avatar = e.target.result;
+        saveDB(db);
+        initProfile();
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function formatNoteDate(dateStr) {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diff = now - date;
+      
+      if (diff < 60000) return 'Ahora mismo';
+      if (diff < 3600000) return 'Hace ' + Math.floor(diff / 60000) + ' min';
+      if (diff < 86400000) return 'Hace ' + Math.floor(diff / 3600000) + ' h';
+      
+      return date.toLocaleDateString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      initTheme();
+      initClock();
+      initProfile();
+    });
+  </script>
+</body>
+</html>

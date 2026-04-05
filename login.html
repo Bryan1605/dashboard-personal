@@ -155,7 +155,7 @@
     <div class="auth-card">
       <div class="auth-logo">
         <div style="text-align: right; margin-bottom: -40px;">
-          <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema" style="background: var(--input-bg); color: var(--text);">🌙</button>
+          <button class="taskbar-theme" id="theme-toggle" title="Cambiar tema" onclick="toggleTheme()" style="background: var(--input-bg); color: var(--text);">🌙</button>
         </div>
         <div class="auth-logo-icon">📊</div>
         <h1>Dashboard Personal</h1>
@@ -211,19 +211,7 @@
   <script src="app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      var btn = document.getElementById('theme-toggle');
-      if (btn) {
-        var saved = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', saved);
-        btn.textContent = saved === 'dark' ? '☀️' : '🌙';
-        btn.addEventListener('click', function() {
-          var current = document.documentElement.getAttribute('data-theme');
-          var next = current === 'dark' ? 'light' : 'dark';
-          document.documentElement.setAttribute('data-theme', next);
-          localStorage.setItem('theme', next);
-          btn.textContent = next === 'dark' ? '☀️' : '🌙';
-        });
-      }
+      initTheme();
     });
     
     const loginForm = document.getElementById('login-form');
